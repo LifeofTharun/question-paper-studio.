@@ -792,12 +792,13 @@
     // API Helper
     async function apiCall(endpoint, method = 'GET', body = null) {
       const headers = { 'Content-Type': 'application/json' };
+      const isAuthAction = endpoint.startsWith('/api/auth/login') || endpoint.startsWith('/api/auth/signup');
       const token = getToken();
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (token && !isAuthAction) headers['Authorization'] = `Bearer ${token}`;
       try {
         const res = await fetch(endpoint, { method, headers, body: body ? JSON.stringify(body) : null });
         const data = await res.json();
-        if (res.status === 401 && currentUser) {
+        if (res.status === 401 && currentUser && !isAuthAction) {
           logout();
           showToast('Session ended: Your account was accessed from another tab/device.', '🔒');
           throw new Error('Session ended: Account accessed elsewhere.');
@@ -824,6 +825,9 @@
       const password = document.getElementById('login-password').value;
       const msgEl = document.getElementById('auth-msg');
       msgEl.innerText = '';
+      clearToken();
+      currentToken = null;
+      currentUser = null;
       try {
         const res = await apiCall('/api/auth/login', 'POST', { email, password });
         setToken(res.token);
@@ -842,6 +846,9 @@
       const password = document.getElementById('signup-password').value;
       const msgEl = document.getElementById('auth-msg');
       msgEl.innerText = '';
+      clearToken();
+      currentToken = null;
+      currentUser = null;
       try {
         const res = await apiCall('/api/auth/signup', 'POST', { name, email, password });
         setToken(res.token);

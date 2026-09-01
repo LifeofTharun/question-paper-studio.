@@ -261,7 +261,9 @@ def signup():
     db.session.add(UserSession(user_id=user.id, token=token))
     db.session.commit()
     log_activity('signup', 'New account created.', user.id)
-    return jsonify({'token': token, 'user': {'name': user.name, 'email': user.email, 'is_admin': False}}), 201
+    return jsonify({'token': token, 'user': {'name': user.name, 'email': user.email, 'is_admin': False,
+                                              'warning': None, 'warning_msg': None, 'warning_seen': True,
+                                              'warning_reply': None, 'warning_status': 'resolved'}}), 201
 
 
 @app.route('/api/auth/login', methods=['POST'])
