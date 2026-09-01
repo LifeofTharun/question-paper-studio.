@@ -738,11 +738,11 @@
     })();
 
     function getToken() {
-      return sessionStorage.getItem('qp_token') || null;
+      return sessionStorage.getItem('qp_token') || localStorage.getItem('qp_token') || null;
     }
     function setToken(token) {
       sessionStorage.setItem('qp_token', token);
-      localStorage.removeItem('qp_token'); // Clear any legacy token from localStorage to prevent cross-tab bleed
+      localStorage.setItem('qp_token', token);
     }
     function clearToken() {
       sessionStorage.removeItem('qp_token');
@@ -861,14 +861,16 @@
       }
     }
 
-    async function logout() {
+    async function logout(silent = false) {
       try { await apiCall('/api/auth/logout', 'POST'); } catch (e) {}
       currentToken = null;
       currentUser = null;
       clearToken();
       document.getElementById('auth-view').classList.remove('hidden');
       document.getElementById('app-view').classList.add('hidden');
-      showToast('Logged out successfully.', '👋');
+      if (!silent) {
+        showToast('Logged out successfully.', '👋');
+      }
     }
 
     async function checkAuth() {
@@ -880,10 +882,10 @@
           currentUser = res.user;
           initAppView();
         } else {
-          logout();
+          logout(true);
         }
       } catch (e) {
-        logout();
+        console.warn('Auth verification skipped on refresh:', e);
       }
     }
 

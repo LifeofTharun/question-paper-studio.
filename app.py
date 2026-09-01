@@ -9,8 +9,12 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, template_folder=BASE_DIR, static_folder=BASE_DIR)
+app.secret_key = os.environ.get('SECRET_KEY', 'kmg-question-paper-studio-secret-key-2026')
+serializer = URLSafeTimedSerializer(app.secret_key)
 db_dir = tempfile.gettempdir() if os.environ.get('VERCEL') else BASE_DIR
 db_path = os.path.join(db_dir, 'questions.db').replace('\\', '/')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
@@ -118,6 +122,10 @@ with app.app_context():
         db.session.commit()
 
 
+def generate_token(user_id):
+    return serializer.dumps({'user_id': user_id})
+
+
 def get_token():
     auth = request.headers.get('Authorization', '')
     if auth.startswith('Bearer '):
@@ -129,10 +137,19 @@ def current_user():
     token = get_token()
     if not token:
         return None
-    sess = UserSession.query.filter_by(token=token).first()
-    if not sess:
-        return None
-    return db.session.get(User, sess.user_id)
+    try:
+        data = serializer.loads(token, max_age=86400 * 30)
+        user_id = data.get('user_id')
+        if not user_id:
+            return None
+        user = db.session.get(User, user_id)
+        if user and user.is_active:
+            return user
+    except Exception:
+        sess = UserSession.query.filter_by(token=token).first()
+        if sess:
+            return db.session.get(User, sess.user_id)
+    return None
 
 
 def log_activity(action, details, user_id=None):
@@ -257,7 +274,7 @@ def signup():
     user = User(name=name, email=email, password_hash=generate_password_hash(password))
     db.session.add(user)
     db.session.commit()
-    token = secrets.token_hex(32)
+    token = generate_token(user.id)
     db.session.add(UserSession(user_id=user.id, token=token))
     db.session.commit()
     log_activity('signup', 'New account created.', user.id)
@@ -289,7 +306,7 @@ def login():
     # Clear previous active sessions for clean user state
     UserSession.query.filter_by(user_id=user.id).delete()
     
-    token = secrets.token_hex(32)
+    token = generate_token(user.id)
     db.session.add(UserSession(user_id=user.id, token=token))
     db.session.commit()
     log_activity('login', 'User logged in.', user.id)
