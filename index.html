@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QP Studio — KMG College</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- html2pdf.js CDN for Direct Question Paper PDF Downloads -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50: '#fffbeb',
+            100: '#fef3c7',
+            500: '#f59e0b',
+            600: '#d97706',
+            700: '#b45309',
+            800: '#92400e',
+            900: '#78350f',
+          }
+        }
+      }
+    }
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Inter',sans-serif;transition:background-color .2s,color .2s}
+  
+  .dark body { background-color: #0f172a; color: #f8fafc; }
+  .light body { background-color: #f8f7f4; color: #1c1917; }
+
+  /* Input fields */
+  .field {
+    display: block; width: 100%; border: 1.5px solid #e7e5e4; border-radius: 12px;
+    padding: 11px 14px; font-size: 14px; outline: none; background: white; transition: all .15s ease;
+  }
+  .dark .field { background: #1e293b; border-color: #334155; color: #f8fafc; }
+  .field:focus { border-color: #b45309; box-shadow: 0 0 0 3px rgba(180,83,9,.15); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border-radius: 12px; padding: 11px 18px; font-weight: 600; font-size: 14px;
+    cursor: pointer; border: none; transition: all .15s ease; user-select: none;
+    min-height: 44px;
+  }
+  .btn:active { transform: scale(0.97); }
+  
+  .btn-amber { background: #b45309; color: #ffffff; }
+  .btn-amber:hover { background: #92400e; }
+  .btn-outline { background: transparent; color: inherit; border: 1.5px solid #e7e5e4; }
+  .dark .btn-outline { border-color: #334155; }
+  .btn-outline:hover { border-color: #b45309; background: rgba(180,83,9,0.05); }
+  .btn-red { background: #dc2626; color: #fff; } .btn-red:hover { background: #b91c1c; }
+  .btn-green { background: #16a34a; color: #fff; } .btn-green:hover { background: #15803d; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; min-height: 36px; border-radius: 8px; }
+
+  /* Cards */
+  .card {
+    background: #ffffff; border: 1.5px solid #e7e5e4; border-radius: 16px; padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02); transition: all .15s ease;
+  }
+  .dark .card { background: #1e293b; border-color: #334155; box-shadow: none; }
+
+  /* Check Cards */
+  .check-card {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border: 1.5px solid #e7e5e4; border-radius: 10px; cursor: pointer; transition: .15s;
+    font-size: 13.5px; font-weight: 500; min-height: 44px;
+  }
+  .dark .check-card { border-color: #334155; background: #0f172a; }
+  .check-card:has(input:checked) { border-color: #b45309; background: #fffbeb; }
+  .dark .check-card:has(input:checked) { border-color: #f59e0b; background: rgba(245,158,11,0.12); }
+  .check-card input { accent-color: #b45309; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+
+  /* Nav Pills */
+  .nav-pill {
+    padding: 9px 16px; border-radius: 10px; font-weight: 600; font-size: 14px;
+    cursor: pointer; border: none; background: transparent; color: #78716c; transition: .15s;
+    white-space: nowrap; display: flex; align-items: center; gap: 6px;
+  }
+  .dark .nav-pill { color: #94a3b8; }
+  .nav-pill.active { background: #b45309; color: #ffffff; }
+  .dark .nav-pill.active { background: #b45309; color: #ffffff; }
+  .nav-pill:hover:not(.active) { background: rgba(0,0,0,0.05); }
+  .dark .nav-pill:hover:not(.active) { background: rgba(255,255,255,0.05); }
+
+  /* Mobile Bottom Navigation */
+  .mobile-nav-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: #94a3b8; padding: 6px 0; width: 100%; transition: .15s;
+  }
+  .mobile-nav-item.active { color: #f59e0b; }
+  
+  /* Labels & Badges */
+  .label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #b45309; margin-bottom: 6px; display: block; }
+  .dark .label { color: #f59e0b; }
+
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .dark .badge-green { background: rgba(22,101,52,0.3); color: #86efac; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .dark .badge-red { background: rgba(153,27,27,0.3); color: #fca5a5; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .dark .badge-amber { background: rgba(146,64,14,0.3); color: #fde68a; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .dark .badge-blue { background: rgba(30,64,175,0.3); color: #93c5fd; }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal-box { background: #fff; border-radius: 20px; padding: 24px; width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+  .dark .modal-box { background: #1e293b; color: #f8fafc; border: 1px solid #334155; }
+
+  /* Toast */
+  .toast {
+    position: fixed; top: 20px; right: 20px; z-index: 200;
+    padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 600;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(-20px); opacity: 0; pointer-events: none; max-width: 90vw;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+
+  /* Print Styles for Official Question Paper */
+  @media print {
+    @page { size: A4 portrait; margin: 0 !important; }
+    html, body { width: 210mm !important; margin: 0 auto !important; padding: 0 !important; background: white !important; color: black !important; font-family: 'Times New Roman', serif !important; font-size: 11pt; line-height: 1.35; height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    header, nav, #toast, .no-print, #auth-view, #app-view > main, #warning-modal, #submit-modal, #add-question-modal { display: none !important; }
+    #paper-modal { position: static !important; inset: auto !important; background: white !important; display: block !important; padding: 0 !important; margin: 0 auto !important; width: 210mm !important; backdrop-filter: none !important; z-index: auto !important; height: auto !important; max-height: none !important; overflow: visible !important; }
+    #paper-modal .modal-box { max-width: 210mm !important; width: 210mm !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 auto !important; max-height: none !important; overflow: visible !important; background: white !important; color: black !important; }
+    #paper-print-area { width: 210mm !important; max-width: 210mm !important; box-sizing: border-box !important; padding: 15mm 18mm 15mm 18mm !important; margin: 0 auto !important; border: none !important; box-shadow: none !important; background: white !important; color: black !important; font-family: 'Times New Roman', serif !important; font-size: 11pt !important; }
+    .part-section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 8px !important; }
+    .question-item { page-break-inside: avoid; break-inside: avoid; }
+    .page-break { page-break-before: always; break-before: page; }
+  }
+</style>
+</head>
+<body class="min-h-screen flex flex-col pb-16 md:pb-0">
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast bg-stone-900 text-white dark:bg-amber-500 dark:text-stone-950 flex items-center gap-2">
+    <span id="toast-icon">ℹ️</span>
+    <span id="toast-msg">Notification</span>
+  </div>
+
+  <!-- WARNING MODAL (from admin) -->
+  <div id="warning-modal" class="modal-bg hidden">
+    <div class="modal-box">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-3xl">⚠️</span>
+        <div>
+          <p class="font-bold text-amber-600 dark:text-amber-400 text-lg">Warning from Administrator</p>
+          <p class="text-xs text-stone-500 dark:text-stone-400">Official Faculty Notice</p>
+        </div>
+      </div>
+      <p id="warning-modal-msg" class="text-sm bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-3.5 mb-4 leading-relaxed"></p>
+      <div class="mb-4">
+        <label class="label">Send Reply to Admin (Optional)</label>
+        <textarea id="warning-reply-input" class="field text-sm" rows="2" placeholder="Type your reply or explanation here..."></textarea>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-amber flex-1 text-sm" onclick="acknowledgeWarning()">✓ Acknowledge & Reply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT PAPER MODAL -->
+  <div id="submit-modal" class="modal-bg hidden">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-1">Submit Paper to Admin</h3>
+      <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Enter subject and department details before official submission.</p>
+      <span class="label">Subject Name</span>
+      <input id="submit-subject" class="field mb-3" placeholder="e.g., Problem Solving & Python Programming">
+      <span class="label">Department</span>
+      <input id="submit-dept" class="field mb-5" placeholder="e.g., B.Sc. Computer Science & AI">
+      <div class="flex gap-3">
+        <button class="btn btn-amber flex-1" onclick="confirmSubmit()">Submit Paper</button>
+        <button class="btn btn-outline flex-1" onclick="closeModal('submit-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAPER VIEW / PRINT MODAL -->
+  <div id="paper-modal" class="modal-bg hidden">
+    <div class="modal-box max-w-4xl w-full p-4 sm:p-8">
+      <div class="flex justify-between items-center mb-4 no-print border-b border-stone-200 dark:border-stone-700 pb-3 flex-wrap gap-2">
+        <div>
+          <h3 class="font-bold text-lg">Question Paper Preview</h3>
+          <p class="text-xs text-stone-500 dark:text-stone-400">Formatted according to KMG College Examination Standards</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap no-print">
+          <button class="btn btn-green btn-sm text-xs" onclick="downloadPaperPDF()">📥 Download PDF (.pdf)</button>
+          <button class="btn btn-outline btn-sm text-xs" onclick="closeModal('paper-modal')">✕ Close</button>
+        </div>
+      </div>
+
+      <!-- Printable Question Paper View -->
+      <div id="paper-print-area" class="paper-print-container bg-white text-stone-900 p-6 sm:p-10 rounded-xl border border-stone-200 shadow-sm text-sm leading-normal font-serif">
+        <!-- Header will be dynamically injected -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD QUESTION MODAL -->
+  <div id="add-question-modal" class="modal-bg hidden">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-1">Add Question to Bank</h3>
+      <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Create a custom question to use in paper generation.</p>
+      
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <span class="label">Unit</span>
+          <select id="new-q-unit" class="field">
+            <option value="1">Unit 1</option><option value="2">Unit 2</option>
+            <option value="3">Unit 3</option><option value="4">Unit 4</option>
+            <option value="5">Unit 5</option>
+          </select>
+        </div>
+        <div>
+          <span class="label">Marks</span>
+          <select id="new-q-marks" class="field">
+            <option value="2">2 Marks (Part A)</option>
+            <option value="5">5 Marks (Part B)</option>
+            <option value="10">10 Marks (Part C)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <span class="label">K-Level</span>
+          <select id="new-q-klevel" class="field">
+            <option value="K1">K1 - Remember</option><option value="K2">K2 - Understand</option>
+            <option value="K3">K3 - Apply</option><option value="K4">K4 - Analyze</option>
+            <option value="K5">K5 - Evaluate</option><option value="K6">K6 - Create</option>
+          </select>
+        </div>
+        <div>
+          <span class="label">Course Outcome (CO)</span>
+          <select id="new-q-co" class="field">
+            <option value="CO1">CO1</option><option value="CO2">CO2</option>
+            <option value="CO3">CO3</option><option value="CO4">CO4</option>
+            <option value="CO5">CO5</option><option value="CO6">CO6</option>
+          </select>
+        </div>
+      </div>
+
+      <span class="label">Question Statement</span>
+      <textarea id="new-q-text" class="field mb-3" rows="3" placeholder="Enter clear question statement..."></textarea>
+      
+      <span class="label">Correct Answer / Key Solution (Optional)</span>
+      <textarea id="new-q-answer" class="field mb-5" rows="2" placeholder="Brief solution explanation for answer key..."></textarea>
+
+      <div class="flex gap-3">
+        <button class="btn btn-amber flex-1" onclick="saveNewQuestion()">Save Question</button>
+        <button class="btn btn-outline flex-1" onclick="closeModal('add-question-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH VIEW -->
+  <div id="auth-view" class="min-h-screen flex flex-col lg:flex-row">
+    <div class="bg-gradient-to-br from-amber-700 via-amber-800 to-orange-950 text-white p-8 lg:p-14 flex flex-col justify-between lg:w-5/12">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-600/30 border border-amber-400/30 rounded-full text-xs font-bold uppercase tracking-widest text-amber-200 mb-6">
+          <span>🏛️ KMG Academic Tools</span>
+        </div>
+        <h1 class="text-4xl lg:text-5xl font-extrabold leading-tight">Question<br>Paper<br>Studio</h1>
+        <p class="mt-4 text-amber-100 text-sm leading-relaxed max-w-sm">
+          Syllabus upload panni, Bloom's K-levels & COs select panni official KMG College question paper instant-ah generate pannalam.
+        </p>
+      </div>
+      <div class="mt-10 lg:mt-0 pt-6 border-t border-amber-600/30 flex justify-between items-center text-xs text-amber-300">
+        <span>KMG College of Arts & Science</span>
+        <span>Faculty Workspace v2.0</span>
+      </div>
+    </div>
+    
+    <div class="flex-1 flex items-center justify-center p-6 lg:p-12">
+      <div class="w-full max-w-sm">
+        <div class="flex gap-1 p-1 bg-stone-100 dark:bg-stone-800 rounded-xl mb-7">
+          <button id="tab-login" class="flex-1 py-2.5 rounded-lg bg-white dark:bg-stone-700 font-semibold text-sm shadow-sm transition" onclick="showAuth('login')">Login</button>
+          <button id="tab-signup" class="flex-1 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 font-semibold text-sm transition" onclick="showAuth('signup')">Sign up</button>
+        </div>
+        
+        <div id="login-form">
+          <h2 class="text-2xl font-bold mb-1">Welcome back 👋</h2>
+          <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Sign in to your faculty workspace.</p>
+          <span class="label">Faculty Email</span>
+          <input id="login-email" type="email" placeholder="faculty@kmgcollege.edu.in" class="field mb-3">
+          <span class="label">Password</span>
+          <input id="login-password" type="password" placeholder="••••••••" class="field mb-5">
+          <button class="btn btn-amber w-full text-base" onclick="login()">Sign In</button>
+        </div>
+
+        <div id="signup-form" class="hidden">
+          <h2 class="text-2xl font-bold mb-1">Create Account</h2>
+          <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Join KMG faculty workspace.</p>
+          <span class="label">Full Name</span>
+          <input id="signup-name" placeholder="Dr. / Prof. Your Name" class="field mb-3">
+          <span class="label">Faculty Email</span>
+          <input id="signup-email" type="email" placeholder="yourname@kmgcollege.edu.in" class="field mb-3">
+          <span class="label">Password</span>
+          <input id="signup-password" type="password" placeholder="Min 6 characters" class="field mb-5">
+          <button class="btn btn-amber w-full text-base" onclick="signup()">Create Account</button>
+        </div>
+        
+        <p id="auth-msg" class="text-sm mt-4 text-red-600 dark:text-red-400 text-center min-h-[20px] font-medium"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP VIEW -->
+  <div id="app-view" class="hidden min-h-screen flex flex-col">
+
+    <!-- HEADER BAR -->
+    <header class="bg-stone-900 text-white px-4 lg:px-8 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md no-print">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-amber-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-inner">QP</div>
+        <div>
+          <span class="font-extrabold text-base tracking-wide block leading-tight">QP Studio</span>
+          <span class="text-[10px] text-amber-400 font-semibold tracking-wider uppercase">KMG College</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Theme Toggle Button -->
+        <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-stone-800 text-amber-400 hover:bg-stone-700 transition" title="Toggle Dark/Light Mode">
+          <span id="theme-icon">🌙</span>
+        </button>
+        
+        <div id="warning-bell" class="hidden cursor-pointer bg-amber-500/20 p-2 rounded-xl text-amber-400 text-sm animate-pulse" onclick="showWarningModalFromBell()" title="You have an active notice from Admin">
+          ⚠️ Notice
+        </div>
+        
+        <span id="user-label" class="text-xs text-stone-300 hidden sm:block font-medium max-w-[140px] truncate bg-stone-800 px-3 py-1.5 rounded-lg border border-stone-700"></span>
+        <button class="btn btn-outline btn-sm text-stone-300 border-stone-700 hover:bg-stone-800 hover:text-white" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <!-- DESKTOP TOP NAV TABS -->
+    <nav class="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800 px-4 lg:px-8 no-print hidden md:block">
+      <div class="flex gap-2 py-2 max-w-6xl mx-auto overflow-x-auto">
+        <button id="nav-builder" class="nav-pill active" onclick="showPanel('builder')">📝 Generator</button>
+        <button id="nav-saved" class="nav-pill" onclick="showPanel('saved')">📚 Syllabus</button>
+        <button id="nav-qbank" class="nav-pill" onclick="showPanel('qbank')">🗂️ Question Bank</button>
+        <button id="nav-history" class="nav-pill" onclick="showPanel('history')">📄 My Papers</button>
+        <button id="nav-admin" class="nav-pill hidden" onclick="showPanel('admin')">🛡 Admin Console</button>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
+
+      <!-- WARNING BANNER FOR USER -->
+      <div id="warning-banner" class="hidden mb-5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl mt-0.5">⚠️</span>
+          <div class="flex-1">
+            <div class="flex justify-between items-center">
+              <p class="font-bold text-amber-800 dark:text-amber-300 text-sm">Notice from Admin</p>
+              <span id="warning-status-badge" class="badge badge-amber">Open</span>
+            </div>
+            <p id="warning-banner-msg" class="text-sm text-stone-700 dark:text-stone-300 mt-1 leading-relaxed"></p>
+            <div id="warning-reply-area" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUILDER / GENERATOR PANEL -->
+      <section id="panel-builder" class="panel">
+        <div class="grid lg:grid-cols-3 gap-5">
+
+          <!-- Left column: Syllabus input -->
+          <div class="lg:col-span-2 space-y-4">
+            <div class="card">
+              <div class="flex justify-between items-center mb-3">
+                <span class="label mb-0">01 / Syllabus Configuration</span>
+                <!-- Sample Syllabus Loader dropdown -->
+                <select id="template-select" class="text-xs bg-amber-50 dark:bg-stone-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1 font-semibold outline-none cursor-pointer" onchange="loadTemplate(this.value)">
+                  <option value="">⚡ Load Sample Template...</option>
+                </select>
+              </div>
+
+              <div class="grid sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <span class="label">Subject Title</span>
+                  <input id="syllabus-title" class="field" placeholder="e.g., Programming for Problem Solving">
+                </div>
+                <div>
+                  <span class="label">Subject Code</span>
+                  <input id="subject-code" class="field" placeholder="e.g., AUCAI11">
+                </div>
+              </div>
+
+              <span class="label">Syllabus Content (Unit-wise)</span>
+              <textarea id="syllabus" class="field mb-3 text-sm font-mono" rows="8" placeholder="UNIT 1&#10;Introduction, Data Types, Variables, Operators&#10;&#10;UNIT 2&#10;Control Structures, Loops, Switch&#10;&#10;UNIT 3&#10;Arrays, Strings, Sorting Algorithms" oninput="updateBlueprintStats()"></textarea>
+
+              <div class="flex flex-wrap gap-2 items-center justify-between">
+                <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                  <input id="syllabus-file" type="file" accept=".txt,.md,.csv" class="text-xs text-stone-500 dark:text-stone-400 flex-1 min-w-0" onchange="handleFileUpload(event)">
+                </div>
+                <button class="btn btn-amber btn-sm" onclick="saveSyllabus()">💾 Save Syllabus</button>
+              </div>
+              <p id="builder-msg" class="text-xs mt-2 text-amber-600 dark:text-amber-400 font-medium min-h-[18px]"></p>
+            </div>
+
+            <!-- Exam Presets -->
+            <div class="card bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800/40">
+              <span class="label">Quick Exam Presets</span>
+              <p class="text-xs text-stone-600 dark:text-stone-400 mb-3">Select a preset to auto-config units and Bloom's levels:</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button class="btn btn-outline btn-sm text-xs bg-white dark:bg-stone-800" onclick="applyPreset('cat1')">📝 CIA Test 1 (U1-U2)</button>
+                <button class="btn btn-outline btn-sm text-xs bg-white dark:bg-stone-800" onclick="applyPreset('cat2')">📝 CIA Test 2 (U3-U4)</button>
+                <button class="btn btn-outline btn-sm text-xs bg-white dark:bg-stone-800" onclick="applyPreset('model')">🎯 Model Exam (All)</button>
+                <button class="btn btn-outline btn-sm text-xs bg-white dark:bg-stone-800" onclick="applyPreset('final')">🎓 Semester Final</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column: Saved syllabus & Blueprint Analytics -->
+          <div class="space-y-4">
+            <div class="card">
+              <span class="label">Quick Load Saved</span>
+              <select id="saved-select" class="field mt-1" onchange="loadSaved(this.value)">
+                <option value="">Choose saved syllabus...</option>
+              </select>
+            </div>
+
+            <!-- Live Blueprint Analytics Widget -->
+            <div class="card">
+              <div class="flex justify-between items-center mb-3">
+                <span class="label mb-0">Blueprint & Bloom's Analytics</span>
+                <span class="badge badge-amber">Live</span>
+              </div>
+              
+              <div class="space-y-3 text-xs">
+                <div>
+                  <div class="flex justify-between text-stone-500 dark:text-stone-400 mb-1">
+                    <span>Selected Units</span>
+                    <span id="stat-units-count" class="font-bold text-amber-700 dark:text-amber-400">0 / 5</span>
+                  </div>
+                  <div class="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-2 overflow-hidden">
+                    <div id="bar-units" class="bg-amber-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-500 dark:text-stone-400 mb-1">
+                    <span>Bloom's Levels (K1-K6)</span>
+                    <span id="stat-k-count" class="font-bold text-amber-700 dark:text-amber-400">0 Selected</span>
+                  </div>
+                  <div class="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-2 overflow-hidden">
+                    <div id="bar-k" class="bg-orange-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-500 dark:text-stone-400 mb-1">
+                    <span>Course Outcomes (COs)</span>
+                    <span id="stat-co-count" class="font-bold text-amber-700 dark:text-amber-400">0 Selected</span>
+                  </div>
+                  <div class="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-2 overflow-hidden">
+                    <div id="bar-co" class="bg-emerald-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 flex justify-between">
+                  <span>Standard Exam Pattern:</span>
+                  <span class="font-bold">Total: 75 Marks</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selection Grid -->
+        <div class="grid sm:grid-cols-3 gap-4 mt-5">
+          <div class="card">
+            <span class="label">02 / Select Units</span>
+            <div class="space-y-2 mt-2">
+              <label class="check-card"><input type="checkbox" value="1" class="unit" onchange="updateBlueprintStats()"><span>Unit 1</span></label>
+              <label class="check-card"><input type="checkbox" value="2" class="unit" onchange="updateBlueprintStats()"><span>Unit 2</span></label>
+              <label class="check-card"><input type="checkbox" value="3" class="unit" onchange="updateBlueprintStats()"><span>Unit 3</span></label>
+              <label class="check-card"><input type="checkbox" value="4" class="unit" onchange="updateBlueprintStats()"><span>Unit 4</span></label>
+              <label class="check-card"><input type="checkbox" value="5" class="unit" onchange="updateBlueprintStats()"><span>Unit 5</span></label>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="label">03 / Bloom's K-Levels</span>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <label class="check-card"><input type="checkbox" value="K1" class="klevel" onchange="updateBlueprintStats()"><span>K1 — Remember</span></label>
+              <label class="check-card"><input type="checkbox" value="K2" class="klevel" onchange="updateBlueprintStats()"><span>K2 — Understand</span></label>
+              <label class="check-card"><input type="checkbox" value="K3" class="klevel" onchange="updateBlueprintStats()"><span>K3 — Apply</span></label>
+              <label class="check-card"><input type="checkbox" value="K4" class="klevel" onchange="updateBlueprintStats()"><span>K4 — Analyze</span></label>
+              <label class="check-card"><input type="checkbox" value="K5" class="klevel" onchange="updateBlueprintStats()"><span>K5 — Evaluate</span></label>
+              <label class="check-card"><input type="checkbox" value="K6" class="klevel" onchange="updateBlueprintStats()"><span>K6 — Create</span></label>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="label">04 / Course Outcomes (CO)</span>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <label class="check-card"><input type="checkbox" value="CO1" class="co" onchange="updateBlueprintStats()"><span>CO1</span></label>
+              <label class="check-card"><input type="checkbox" value="CO2" class="co" onchange="updateBlueprintStats()"><span>CO2</span></label>
+              <label class="check-card"><input type="checkbox" value="CO3" class="co" onchange="updateBlueprintStats()"><span>CO3</span></label>
+              <label class="check-card"><input type="checkbox" value="CO4" class="co" onchange="updateBlueprintStats()"><span>CO4</span></label>
+              <label class="check-card"><input type="checkbox" value="CO5" class="co" onchange="updateBlueprintStats()"><span>CO5</span></label>
+              <label class="check-card"><input type="checkbox" value="CO6" class="co" onchange="updateBlueprintStats()"><span>CO6</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generate Action Box -->
+        <div class="card mt-5 bg-stone-900 text-white dark:bg-slate-900 border-amber-600/30">
+          <span class="label text-amber-400">05 / Instant Question Paper Generator</span>
+          <p class="text-stone-400 text-xs sm:text-sm mb-4">Select section mark mode or generate complete exam question paper.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button class="btn btn-outline border-stone-700 text-stone-200 hover:bg-stone-800" onclick="generateByMode('2')">2 Marks Only</button>
+            <button class="btn btn-outline border-stone-700 text-stone-200 hover:bg-stone-800" onclick="generateByMode('5')">5 Marks Only</button>
+            <button class="btn btn-outline border-stone-700 text-stone-200 hover:bg-stone-800" onclick="generateByMode('10')">10 Marks Only</button>
+            <button class="btn btn-amber shadow-lg shadow-amber-900/30" onclick="generateByMode('full')">⚡ Generate Full Paper</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SAVED SYLLABUS PANEL -->
+      <section id="panel-saved" class="panel hidden">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="text-xl font-bold">Saved Syllabus Repository</h2>
+            <p class="text-xs text-stone-500 dark:text-stone-400">Manage your course syllabuses.</p>
+          </div>
+        </div>
+        <div id="saved-list" class="grid sm:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- QUESTION BANK PANEL -->
+      <section id="panel-qbank" class="panel hidden">
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h2 class="text-xl font-bold">Question Bank Explorer</h2>
+            <p class="text-xs text-stone-500 dark:text-stone-400">Search, filter, and add custom questions with solutions.</p>
+          </div>
+          <button class="btn btn-amber btn-sm" onclick="openModal('add-question-modal')">➕ Add Custom Question</button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="card mb-4">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div>
+              <span class="label">Unit</span>
+              <select id="filter-q-unit" class="field text-xs" onchange="filterQuestions()">
+                <option value="">All Units</option>
+                <option value="1">Unit 1</option><option value="2">Unit 2</option>
+                <option value="3">Unit 3</option><option value="4">Unit 4</option>
+                <option value="5">Unit 5</option>
+              </select>
+            </div>
+            <div>
+              <span class="label">K-Level</span>
+              <select id="filter-q-klevel" class="field text-xs" onchange="filterQuestions()">
+                <option value="">All Levels</option>
+                <option value="K1">K1</option><option value="K2">K2</option>
+                <option value="K3">K3</option><option value="K4">K4</option>
+                <option value="K5">K5</option><option value="K6">K6</option>
+              </select>
+            </div>
+            <div>
+              <span class="label">Marks</span>
+              <select id="filter-q-marks" class="field text-xs" onchange="filterQuestions()">
+                <option value="">All Marks</option>
+                <option value="2">2 Marks</option>
+                <option value="5">5 Marks</option>
+                <option value="10">10 Marks</option>
+              </select>
+            </div>
+            <div class="col-span-2">
+              <span class="label">Search Keyword</span>
+              <input id="filter-q-search" class="field text-xs" placeholder="Search topic or question..." oninput="filterQuestions()">
+            </div>
+          </div>
+        </div>
+
+        <div id="qbank-list" class="space-y-3"></div>
+      </section>
+
+      <!-- HISTORY PANEL -->
+      <section id="panel-history" class="panel hidden">
+        <div class="mb-4">
+          <h2 class="text-xl font-bold">My Generated Question Papers</h2>
+          <p class="text-xs text-stone-500 dark:text-stone-400">View, preview, print, or submit papers to administrator.</p>
+        </div>
+        <div id="history-list" class="space-y-4"></div>
+      </section>
+
+      <!-- ADMIN PANEL -->
+      <section id="panel-admin" class="panel hidden">
+        <div class="mb-4">
+          <h2 class="text-xl font-bold">Administrator Console</h2>
+          <p class="text-xs text-stone-500 dark:text-stone-400">Manage faculty accounts, inspect question papers, and issue official notices.</p>
+        </div>
+
+        <!-- Admin Metrics Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="card text-center p-3">
+            <span class="text-2xl font-extrabold text-amber-600" id="stat-total-users">0</span>
+            <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold mt-1">Faculty Members</p>
+          </div>
+          <div class="card text-center p-3">
+            <span class="text-2xl font-extrabold text-emerald-600" id="stat-total-submitted">0</span>
+            <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold mt-1">Submitted Papers</p>
+          </div>
+          <div class="card text-center p-3">
+            <span class="text-2xl font-extrabold text-blue-600" id="stat-total-questions">0</span>
+            <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold mt-1">Question Pool</p>
+          </div>
+          <div class="card text-center p-3">
+            <span class="text-2xl font-extrabold text-purple-600" id="stat-total-papers">0</span>
+            <p class="text-xs text-stone-500 dark:text-stone-400 font-semibold mt-1">Total Generated</p>
+          </div>
+        </div>
+
+        <!-- Admin Warning Issuer Form Widget -->
+        <div class="card mb-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800/40">
+          <span class="label">Issue Official Notice to Faculty</span>
+          <div class="grid sm:grid-cols-3 gap-3 mt-2">
+            <div>
+              <span class="label">Select Faculty Member</span>
+              <select id="admin-warn-user-select" class="field text-xs">
+                <option value="">Choose Faculty Member...</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <span class="label">Notice Message</span>
+              <div class="flex gap-2">
+                <input id="admin-warn-msg-input" class="field text-xs flex-1" placeholder="Type official notice/warning message...">
+                <button class="btn btn-amber btn-sm whitespace-nowrap" onclick="issueNoticeFromForm()">⚠️ Send Notice</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-2 mb-5 overflow-x-auto pb-1">
+          <button id="atab-users-btn" class="btn btn-amber btn-sm" onclick="showAdminTab('users')">👥 Faculty Accounts & Warnings</button>
+          <button id="atab-subs-btn" class="btn btn-outline btn-sm" onclick="showAdminTab('subs')">📄 Submitted Papers</button>
+        </div>
+
+        <div id="atab-users"><div id="admin-users-content"></div></div>
+        <div id="atab-subs" class="hidden"><div id="admin-subs-content"></div></div>
+      </section>
+
+    </main>
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-stone-900 text-stone-300 border-t border-stone-800 z-50 md:hidden flex justify-around items-center h-16 no-print">
+      <button id="mnav-builder" class="mobile-nav-item active" onclick="showPanel('builder')">
+        <span class="text-lg">📝</span>
+        <span>Generator</span>
+      </button>
+      <button id="mnav-saved" class="mobile-nav-item" onclick="showPanel('saved')">
+        <span class="text-lg">📚</span>
+        <span>Syllabus</span>
+      </button>
+      <button id="mnav-qbank" class="mobile-nav-item" onclick="showPanel('qbank')">
+        <span class="text-lg">🗂️</span>
+        <span>Q-Bank</span>
+      </button>
+      <button id="mnav-history" class="mobile-nav-item" onclick="showPanel('history')">
+        <span class="text-lg">📄</span>
+        <span>Papers</span>
+      </button>
+      <button id="mnav-admin" class="mobile-nav-item hidden" onclick="showPanel('admin')">
+        <span class="text-lg">🛡️</span>
+        <span>Admin</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT LOGIC WITH SECURITY GUARDS -->
+  <script>
+    // ==========================================
+    // 🛡️ CLIENT SECURITY & ANTI-INSPECT GUARDS
+    // ==========================================
+    (function initSecurityGuards() {
+      // 1. Disable Right Click Context Menu
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        showToast('🔒 Right-Click Context Menu is disabled for security reasons.', '🛡️');
+        return false;
+      });
+
+      // 2. Disable Keyboard Shortcuts (F12, Inspect, View Source, Save)
+      document.addEventListener('keydown', function(e) {
+        if (
+          e.keyCode === 123 || // F12
+          (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
+          (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // Ctrl+U or Ctrl+S
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          showToast('🔒 Source Code Inspection & Shortcuts are disabled.', '🛡️');
+          return false;
+        }
+      });
+
+      // 3. Neutralize Console Output
+      const _noop = function() {};
+      window.console.log = _noop;
+      window.console.warn = _noop;
+      window.console.error = _noop;
+      window.console.info = _noop;
+      window.console.debug = _noop;
+
+      // 4. Anti-DevTools Inspection Trap
+      setInterval(function antiDevToolsTrap() {
+        const startTime = performance.now();
+        (function() {}['constructor']('debugger')());
+        const endTime = performance.now();
+        if (endTime - startTime > 100) {
+          document.body.innerHTML = `
+            <div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;background:#0f172a;color:#f59e0b;text-align:center;padding:20px;">
+              <div>
+                <h1 style="font-size:32px;margin-bottom:10px;">🛡️ Security Warning</h1>
+                <p style="font-size:16px;color:#94a3b8;">DevTools Inspection Detected. Access has been temporarily restricted for security.</p>
+                <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#b45309;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">Reload Page</button>
+              </div>
+            </div>
+          `;
+        }
+      }, 1000);
+    })();
+
+    function getToken() {
+      return sessionStorage.getItem('qp_token') || null;
+    }
+    function setToken(token) {
+      sessionStorage.setItem('qp_token', token);
+      localStorage.removeItem('qp_token'); // Clear any legacy token from localStorage to prevent cross-tab bleed
+    }
+    function clearToken() {
+      sessionStorage.removeItem('qp_token');
+      localStorage.removeItem('qp_token');
+    }
+
+    let currentUser = null;
+    let currentToken = getToken();
+    let currentPaperObj = null;
+    let showAnswerKeyMode = false;
+
+    // Toast helper
+    function showToast(msg, icon = 'ℹ️') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      document.getElementById('toast-icon').innerText = icon;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // Modal Helpers
+    function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
+
+    // Theme Toggle
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        html.classList.add('light');
+        localStorage.setItem('qp_theme', 'light');
+        document.getElementById('theme-icon').innerText = '🌙';
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+        localStorage.setItem('qp_theme', 'dark');
+        document.getElementById('theme-icon').innerText = '☀️';
+      }
+    }
+    // Init theme
+    if (localStorage.getItem('qp_theme') === 'dark') {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+      setTimeout(() => { if(document.getElementById('theme-icon')) document.getElementById('theme-icon').innerText = '☀️'; }, 100);
+    }
+
+    // API Helper
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      try {
+        const res = await fetch(endpoint, { method, headers, body: body ? JSON.stringify(body) : null });
+        const data = await res.json();
+        if (res.status === 401 && currentUser) {
+          logout();
+          showToast('Session ended: Your account was accessed from another tab/device.', '🔒');
+          throw new Error('Session ended: Account accessed elsewhere.');
+        }
+        if (!res.ok) throw new Error(data.error || 'Server error occurred.');
+        return data;
+      } catch (err) {
+        throw err;
+      }
+    }
+
+    // Auth logic
+    function showAuth(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('login-form').classList.toggle('hidden', !isLogin);
+      document.getElementById('signup-form').classList.toggle('hidden', isLogin);
+      document.getElementById('tab-login').className = isLogin ? 'flex-1 py-2.5 rounded-lg bg-white dark:bg-stone-700 font-semibold text-sm shadow-sm transition' : 'flex-1 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 font-semibold text-sm transition';
+      document.getElementById('tab-signup').className = !isLogin ? 'flex-1 py-2.5 rounded-lg bg-white dark:bg-stone-700 font-semibold text-sm shadow-sm transition' : 'flex-1 py-2.5 rounded-lg text-stone-500 dark:text-stone-400 font-semibold text-sm transition';
+      document.getElementById('auth-msg').innerText = '';
+    }
+
+    async function login() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const msgEl = document.getElementById('auth-msg');
+      msgEl.innerText = '';
+      try {
+        const res = await apiCall('/api/auth/login', 'POST', { email, password });
+        setToken(res.token);
+        currentToken = res.token;
+        currentUser = res.user;
+        initAppView();
+        showToast(`Welcome back, ${currentUser.name}!`, '👋');
+      } catch (err) {
+        msgEl.innerText = err.message;
+      }
+    }
+
+    async function signup() {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const msgEl = document.getElementById('auth-msg');
+      msgEl.innerText = '';
+      try {
+        const res = await apiCall('/api/auth/signup', 'POST', { name, email, password });
+        setToken(res.token);
+        currentToken = res.token;
+        currentUser = res.user;
+        initAppView();
+        showToast('Account created successfully!', '🎉');
+      } catch (err) {
+        msgEl.innerText = err.message;
+      }
+    }
+
+    async function logout() {
+      try { await apiCall('/api/auth/logout', 'POST'); } catch (e) {}
+      currentToken = null;
+      currentUser = null;
+      clearToken();
+      document.getElementById('auth-view').classList.remove('hidden');
+      document.getElementById('app-view').classList.add('hidden');
+      showToast('Logged out successfully.', '👋');
+    }
+
+    async function checkAuth() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await apiCall('/api/me');
+        if (res.user) {
+          currentUser = res.user;
+          initAppView();
+        } else {
+          logout();
+        }
+      } catch (e) {
+        logout();
+      }
+    }
+
+    function initAppView() {
+      document.getElementById('auth-view').classList.add('hidden');
+      document.getElementById('app-view').classList.remove('hidden');
+      document.getElementById('user-label').innerText = currentUser.name;
+      
+      const isAdmin = currentUser.is_admin;
+
+      // Navigation bar tab isolation for Admin vs Faculty
+      document.getElementById('nav-builder').classList.toggle('hidden', isAdmin);
+      document.getElementById('nav-saved').classList.toggle('hidden', isAdmin);
+      document.getElementById('nav-qbank').classList.toggle('hidden', isAdmin);
+      document.getElementById('nav-history').classList.toggle('hidden', isAdmin);
+      document.getElementById('nav-admin').classList.toggle('hidden', !isAdmin);
+
+      document.getElementById('mnav-builder').classList.toggle('hidden', isAdmin);
+      document.getElementById('mnav-saved').classList.toggle('hidden', isAdmin);
+      document.getElementById('mnav-qbank').classList.toggle('hidden', isAdmin);
+      document.getElementById('mnav-history').classList.toggle('hidden', isAdmin);
+      document.getElementById('mnav-admin').classList.toggle('hidden', !isAdmin);
+
+      if (isAdmin) {
+        showPanel('admin');
+        loadAdminData();
+      } else {
+        showPanel('builder');
+        checkUserWarning();
+        loadSyllabusList();
+        loadTemplates();
+        loadQuestions();
+        updateBlueprintStats();
+      }
+    }
+
+    function showPanel(panelName) {
+      if (currentUser && currentUser.is_admin) {
+        panelName = 'admin';
+      }
+      document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`panel-${panelName}`)?.classList.remove('hidden');
+
+      // Desktop nav pills
+      document.querySelectorAll('.nav-pill').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`nav-${panelName}`)?.classList.add('active');
+
+      // Mobile bottom nav items
+      document.querySelectorAll('.mobile-nav-item').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`mnav-${panelName}`)?.classList.add('active');
+
+      if (panelName === 'saved') loadSyllabusList();
+      if (panelName === 'qbank') loadQuestions();
+      if (panelName === 'history') loadHistory();
+      if (panelName === 'admin') loadAdminData();
+    }
+
+    function checkUserWarning() {
+      const banner = document.getElementById('warning-banner');
+      const bell = document.getElementById('warning-bell');
+      if (currentUser && currentUser.warning_msg && currentUser.warning_status !== 'resolved') {
+        document.getElementById('warning-banner-msg').innerText = currentUser.warning_msg;
+        document.getElementById('warning-status-badge').innerText = (currentUser.warning_status || 'OPEN').toUpperCase();
+        banner.classList.remove('hidden');
+        bell.classList.remove('hidden');
+
+        if (!currentUser.warning_seen) {
+          document.getElementById('warning-modal-msg').innerText = currentUser.warning_msg;
+          openModal('warning-modal');
+        }
+      } else {
+        banner.classList.add('hidden');
+        bell.classList.add('hidden');
+      }
+    }
+
+    function showWarningModalFromBell() {
+      document.getElementById('warning-modal-msg').innerText = currentUser.warning_msg;
+      openModal('warning-modal');
+    }
+
+    async function acknowledgeWarning() {
+      const reply = document.getElementById('warning-reply-input').value.trim();
+      try {
+        if (reply) {
+          await apiCall('/api/auth/reply-warning', 'POST', { reply });
+        } else {
+          await apiCall('/api/auth/acknowledge-warning', 'POST');
+        }
+        closeModal('warning-modal');
+        if (currentUser) currentUser.warning_seen = true;
+        showToast('Notice acknowledged.', '✓');
+        checkAuth();
+      } catch (err) {
+        showToast(err.message, '⚠️');
+      }
+    }
+
+    // Navigation Panels
+    function showPanel(panelName) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`panel-${panelName}`)?.classList.remove('hidden');
+
+      // Desktop nav pills
+      document.querySelectorAll('.nav-pill').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`nav-${panelName}`)?.classList.add('active');
+
+      // Mobile bottom nav items
+      document.querySelectorAll('.mobile-nav-item').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`mnav-${panelName}`)?.classList.add('active');
+
+      if (panelName === 'saved') loadSyllabusList();
+      if (panelName === 'qbank') loadQuestions();
+      if (panelName === 'history') loadHistory();
+      if (panelName === 'admin') loadAdminData();
+    }
+
+    // Syllabus Management & Templates
+    async function loadTemplates() {
+      try {
+        const res = await apiCall('/api/templates');
+        const select = document.getElementById('template-select');
+        select.innerHTML = '<option value="">⚡ Load Sample Template...</option>';
+        res.templates.forEach((tpl, idx) => {
+          select.innerHTML += `<option value="${idx}">${tpl.title} (${tpl.subject_code})</option>`;
+        });
+        window._templates = res.templates;
+      } catch(e){}
+    }
+
+    function loadTemplate(idx) {
+      if (idx === '' || !window._templates || !window._templates[idx]) return;
+      const tpl = window._templates[idx];
+      document.getElementById('syllabus-title').value = tpl.title;
+      document.getElementById('subject-code').value = tpl.subject_code;
+      document.getElementById('syllabus').value = tpl.content;
+      showToast(`Loaded template: ${tpl.title}`, '📄');
+      updateBlueprintStats();
+    }
+
+    async function loadSyllabusList() {
+      try {
+        const res = await apiCall('/api/syllabus');
+        const listEl = document.getElementById('saved-list');
+        const selectEl = document.getElementById('saved-select');
+
+        selectEl.innerHTML = '<option value="">Choose saved syllabus...</option>';
+        if (!res.syllabuses.length) {
+          listEl.innerHTML = `<div class="col-span-2 text-center py-8 text-stone-400 text-sm">No saved syllabus found. Create or paste one in the Generator!</div>`;
+          return;
+        }
+
+        listEl.innerHTML = res.syllabuses.map(s => `
+          <div class="card relative group">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="badge badge-amber mb-1">${s.subject_code}</span>
+                <h3 class="font-bold text-base text-stone-900 dark:text-stone-100">${s.title}</h3>
+              </div>
+              <button class="btn btn-outline btn-sm text-red-500 border-red-200 dark:border-red-950 hover:bg-red-50" onclick="deleteSyllabus(${s.id})">🗑 Delete</button>
+            </div>
+            <p class="text-xs text-stone-500 dark:text-stone-400 line-clamp-3 mb-3 font-mono">${s.content}</p>
+            <button class="btn btn-amber btn-sm w-full" onclick="useSyllabus(${s.id})">⚡ Load into Generator</button>
+          </div>
+        `).join('');
+
+        window._syllabuses = res.syllabuses;
+        res.syllabuses.forEach(s => {
+          selectEl.innerHTML += `<option value="${s.id}">${s.title} (${s.subject_code})</option>`;
+        });
+      } catch (err) {
+        showToast(err.message, '❌');
+      }
+    }
+
+    function useSyllabus(id) {
+      const s = window._syllabuses?.find(item => item.id === id);
+      if (!s) return;
+      document.getElementById('syllabus-title').value = s.title;
+      document.getElementById('subject-code').value = s.subject_code;
+      document.getElementById('syllabus').value = s.content;
+      showPanel('builder');
+      showToast(`Loaded ${s.subject_code} into Generator!`, '✅');
+      updateBlueprintStats();
+    }
+
+    function loadSaved(id) {
+      if (id) useSyllabus(parseInt(id));
+    }
+
+    async function saveSyllabus() {
+      const title = document.getElementById('syllabus-title').value.trim();
+      const subject_code = document.getElementById('subject-code').value.trim();
+      const content = document.getElementById('syllabus').value.trim();
+      const msgEl = document.getElementById('builder-msg');
+
+      if (!content) {
+        msgEl.innerText = 'Please enter syllabus content text.';
+        return;
+      }
+      try {
+        await apiCall('/api/syllabus', 'POST', { title, subject_code, content });
+        msgEl.innerText = 'Syllabus saved to repository successfully!';
+        showToast('Syllabus saved!', '💾');
+        loadSyllabusList();
+      } catch (err) {
+        msgEl.innerText = err.message;
+      }
+    }
+
+    async function deleteSyllabus(id) {
+      if (!confirm('Are you sure you want to delete this syllabus?')) return;
+      try {
+        await apiCall(`/api/syllabus/${id}`, 'DELETE');
+        showToast('Syllabus deleted.', '🗑️');
+        loadSyllabusList();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        document.getElementById('syllabus').value = evt.target.result;
+        showToast('File text loaded into syllabus field.', '📁');
+        updateBlueprintStats();
+      };
+      reader.readAsText(file);
+    }
+
+    // Presets & Blueprint Stats
+    function applyPreset(preset) {
+      const units = document.querySelectorAll('.unit');
+      const klevels = document.querySelectorAll('.klevel');
+      const cos = document.querySelectorAll('.co');
+
+      units.forEach(u => u.checked = false);
+      klevels.forEach(k => k.checked = false);
+      cos.forEach(c => c.checked = false);
+
+      if (preset === 'cat1') {
+        units[0].checked = true; units[1].checked = true;
+        klevels[0].checked = true; klevels[1].checked = true; klevels[2].checked = true;
+        cos[0].checked = true; cos[1].checked = true;
+      } else if (preset === 'cat2') {
+        units[2].checked = true; units[3].checked = true;
+        klevels[1].checked = true; klevels[2].checked = true; klevels[3].checked = true;
+        cos[2].checked = true; cos[3].checked = true;
+      } else { // model or final
+        units.forEach(u => u.checked = true);
+        klevels.forEach(k => k.checked = true);
+        cos.forEach(c => c.checked = true);
+      }
+      updateBlueprintStats();
+      showToast(`Applied preset: ${preset.toUpperCase()}`, '🎯');
+    }
+
+    function updateBlueprintStats() {
+      const uCount = document.querySelectorAll('.unit:checked').length;
+      const kCount = document.querySelectorAll('.klevel:checked').length;
+      const coCount = document.querySelectorAll('.co:checked').length;
+
+      document.getElementById('stat-units-count').innerText = `${uCount} / 5 Units`;
+      document.getElementById('bar-units').style.width = `${(uCount / 5) * 100}%`;
+
+      document.getElementById('stat-k-count').innerText = `${kCount} Selected`;
+      document.getElementById('bar-k').style.width = `${(kCount / 6) * 100}%`;
+
+      document.getElementById('stat-co-count').innerText = `${coCount} Selected`;
+      document.getElementById('bar-co').style.width = `${(coCount / 6) * 100}%`;
+    }
+
+    // Question Bank Logic
+    async function loadQuestions() {
+      const unit = document.getElementById('filter-q-unit').value;
+      const k_level = document.getElementById('filter-q-klevel').value;
+      const marks = document.getElementById('filter-q-marks').value;
+      const q = document.getElementById('filter-q-search').value.trim();
+
+      let url = '/api/questions?';
+      if (unit) url += `unit=${unit}&`;
+      if (k_level) url += `k_level=${k_level}&`;
+      if (marks) url += `marks=${marks}&`;
+      if (q) url += `q=${encodeURIComponent(q)}&`;
+
+      try {
+        const res = await apiCall(url);
+        const listEl = document.getElementById('qbank-list');
+        if (!res.questions.length) {
+          listEl.innerHTML = `<div class="text-center py-8 text-stone-400 text-sm">No questions found matching your filter criteria.</div>`;
+          return;
+        }
+
+        listEl.innerHTML = res.questions.map(item => `
+          <div class="card p-4">
+            <div class="flex justify-between items-start gap-2 mb-2 flex-wrap">
+              <div class="flex items-center gap-2">
+                <span class="badge badge-amber">Unit ${item.unit}</span>
+                <span class="badge badge-blue">${item.k_level}</span>
+                <span class="badge badge-green">${item.co}</span>
+                <span class="badge badge-red">${item.marks} Marks</span>
+              </div>
+              <button class="btn btn-outline btn-sm text-red-500 border-stone-200 dark:border-stone-700" onclick="deleteQuestion(${item.id})">🗑 Delete</button>
+            </div>
+            <p class="font-medium text-stone-900 dark:text-stone-100 text-sm mb-2">${item.text}</p>
+            ${item.correct_answer ? `<p class="text-xs bg-amber-50 dark:bg-amber-950/30 text-stone-700 dark:text-amber-300 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50"><strong>Key Answer:</strong> ${item.correct_answer}</p>` : ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        showToast(err.message, '❌');
+      }
+    }
+
+    function filterQuestions() { loadQuestions(); }
+
+    async function saveNewQuestion() {
+      const unit = parseInt(document.getElementById('new-q-unit').value);
+      const marks = parseInt(document.getElementById('new-q-marks').value);
+      const k_level = document.getElementById('new-q-klevel').value;
+      const co = document.getElementById('new-q-co').value;
+      const text = document.getElementById('new-q-text').value.trim();
+      const correct_answer = document.getElementById('new-q-answer').value.trim();
+
+      if (!text) { showToast('Please enter question text.', '⚠️'); return; }
+
+      try {
+        await apiCall('/api/questions', 'POST', { unit, marks, k_level, co, text, correct_answer });
+        closeModal('add-question-modal');
+        showToast('Question added to question bank!', '✅');
+        document.getElementById('new-q-text').value = '';
+        document.getElementById('new-q-answer').value = '';
+        loadQuestions();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    async function deleteQuestion(id) {
+      if (!confirm('Are you sure you want to remove this question?')) return;
+      try {
+        await apiCall(`/api/questions/${id}`, 'DELETE');
+        showToast('Question removed.', '🗑️');
+        loadQuestions();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    // Paper Generation
+    async function generateByMode(mode) {
+      const units = Array.from(document.querySelectorAll('.unit:checked')).map(cb => parseInt(cb.value));
+      const k_levels = Array.from(document.querySelectorAll('.klevel:checked')).map(cb => cb.value);
+      const cos = Array.from(document.querySelectorAll('.co:checked')).map(cb => cb.value);
+      const syllabus = document.getElementById('syllabus').value.trim();
+      const subject_code = document.getElementById('subject-code').value.trim() || 'AUCAI11';
+
+      if (!units.length || !k_levels.length) {
+        showToast('Please select at least 1 Unit and K-Level!', '⚠️');
+        return;
+      }
+
+      try {
+        showToast('Generating question paper...', '⚡');
+        const res = await apiCall('/api/generate', 'POST', {
+          units, k_levels, cos, syllabus, subject_code, mode
+        });
+
+        if (res.warnings && res.warnings.length) {
+          showToast(res.warnings.join(' '), '⚠️');
+        }
+
+        currentPaperObj = res;
+        renderPaperView(res);
+        openModal('paper-modal');
+      } catch (err) {
+        showToast(err.message, '❌');
+      }
+    }
+
+    // Render Official KMG Question Paper Format
+    function renderPaperView(data) {
+      const subjectTitle = document.getElementById('syllabus-title').value.trim() || 'ACADEMIC EXAMINATION';
+      const subjectCode = data.subject_code || document.getElementById('subject-code').value.trim() || 'AUCAI11';
+      
+      const today = new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      let html = `
+        <div class="text-center font-serif border-b-2 border-stone-800 pb-3 mb-5">
+          <h1 class="text-lg font-bold tracking-wide uppercase">KMG COLLEGE OF ARTS AND SCIENCE</h1>
+          <p class="text-xs italic font-sans font-semibold text-stone-600">Approved by Govt. of Tamil Nadu & Affiliated to Thiruvalluvar University</p>
+          <p class="text-xs font-semibold uppercase tracking-widest mt-0.5">GUDIYATTAM - 635 803</p>
+          <div class="my-2.5 py-1 bg-stone-100 border-y border-stone-300 font-sans font-bold text-xs uppercase flex justify-between px-4">
+            <span>Subject Code: ${subjectCode}</span>
+            <span>DATE: ${today}</span>
+          </div>
+          <h2 class="text-sm font-bold uppercase underline tracking-wider">${subjectTitle}</h2>
+          <div class="flex justify-between text-xs font-sans mt-2 font-medium">
+            <span>Time: 3 Hours</span>
+            <span>Max. Marks: 75</span>
+          </div>
+        </div>
+      `;
+
+      // PART A (Q1 to Q10)
+      if (data.part_a && data.part_a.length) {
+        html += `
+          <div class="mb-5 part-section" style="page-break-inside: avoid; break-inside: avoid;">
+            <div class="font-sans font-bold text-xs border-b border-stone-400 pb-1 mb-2.5 flex justify-between uppercase tracking-wide">
+              <span>PART – A (10 × 2 = 20 Marks)</span>
+              <span>Answer ALL Questions</span>
+            </div>
+            <ol class="list-decimal pl-5 space-y-1.5 text-sm font-sans">
+              ${data.part_a.map((q, idx) => `
+                <li class="question-item">
+                  <div class="flex justify-between items-start gap-4">
+                    <span class="flex-1">${q.text}</span>
+                    <span class="text-[11px] text-stone-500 font-mono font-semibold whitespace-nowrap">[${q.k_level} | ${q.co}]</span>
+                  </div>
+                </li>
+              `).join('')}
+            </ol>
+          </div>
+        `;
+      }
+
+      // PART B (Q11 to Q15 Either / Or Pattern)
+      if (data.part_b && data.part_b.length) {
+        html += `
+          <div class="mb-5 part-section" style="page-break-inside: avoid; break-inside: avoid;">
+            <div class="font-sans font-bold text-xs border-b border-stone-400 pb-1 mb-2.5 flex justify-between uppercase tracking-wide">
+              <span>PART – B (5 × 5 = 25 Marks)</span>
+              <span>Answer ALL Questions (Either / Or Pattern)</span>
+            </div>
+            <div class="space-y-3 font-sans text-sm">
+        `;
+
+        for (let i = 0; i < data.part_b.length; i += 2) {
+          const qNum = 11 + Math.floor(i / 2);
+          const qA = data.part_b[i];
+          const qB = data.part_b[i + 1] || qA;
+
+          html += `
+            <div class="question-item pb-1.5 border-b border-stone-200 dark:border-stone-800" style="page-break-inside: avoid; break-inside: avoid;">
+              <div class="flex items-start gap-2">
+                <span class="font-bold w-6 text-right shrink-0">${qNum}.</span>
+                <div class="flex-1 space-y-1">
+                  <div class="flex justify-between items-start gap-2">
+                    <span class="flex-1">(a) ${qA.text}</span>
+                    <span class="text-[11px] text-stone-500 font-mono font-semibold whitespace-nowrap">[${qA.k_level} | ${qA.co}]</span>
+                  </div>
+                  
+                  <div class="text-center font-bold text-xs text-stone-500 my-0.5 font-mono uppercase tracking-widest">(OR)</div>
+
+                  <div class="flex justify-between items-start gap-2">
+                    <span class="flex-1">(b) ${qB.text}</span>
+                    <span class="text-[11px] text-stone-500 font-mono font-semibold whitespace-nowrap">[${qB.k_level} | ${qB.co}]</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        html += `
+            </div>
+          </div>
+        `;
+      }
+
+      // PART C (Q16 to Q20)
+      if (data.part_c && data.part_c.length) {
+        html += `
+          <div class="mb-4 part-section" style="page-break-inside: avoid; break-inside: avoid;">
+            <div class="font-sans font-bold text-xs border-b border-stone-400 pb-1 mb-2.5 flex justify-between uppercase tracking-wide">
+              <span>PART – C (3 × 10 = 30 Marks)</span>
+              <span>Answer ANY THREE Questions</span>
+            </div>
+            <ol start="16" class="list-decimal pl-5 space-y-2 text-sm font-sans">
+              ${data.part_c.map((q, idx) => `
+                <li class="question-item" style="page-break-inside: avoid; break-inside: avoid;">
+                  <div class="flex justify-between items-start gap-4">
+                    <span class="flex-1">${q.text}</span>
+                    <span class="text-[11px] text-stone-500 font-mono font-semibold whitespace-nowrap">[${q.k_level} | ${q.co}]</span>
+                  </div>
+                </li>
+              `).join('')}
+            </ol>
+          </div>
+        `;
+      }
+
+      document.getElementById('paper-print-area').innerHTML = html;
+    }
+
+    function downloadPaperPDF() {
+      const element = document.getElementById('paper-print-area');
+      const subjectCode = (currentPaperObj && currentPaperObj.subject_code) || 'Question_Paper';
+      const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     `${subjectCode}_Question_Paper.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      showToast('Generating Question Paper PDF file...', '📄');
+      if (window.html2pdf) {
+        html2pdf().set(opt).from(element).save().then(() => {
+          showToast('Question Paper PDF downloaded successfully!', '✅');
+        }).catch(err => {
+          window.print();
+        });
+      } else {
+        window.print();
+      }
+    }
+
+    // History Panel
+    async function loadHistory() {
+      try {
+        const res = await apiCall('/api/history');
+        const listEl = document.getElementById('history-list');
+
+        if (!res.papers || !res.papers.length) {
+          listEl.innerHTML = `<div class="text-center py-8 text-stone-400 text-sm">No generated papers yet. Go to Generator to create one!</div>`;
+          return;
+        }
+
+        window._historyPapers = res.papers;
+
+        listEl.innerHTML = res.papers.map(p => `
+          <div class="card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="badge badge-amber">${p.subject_code}</span>
+                ${p.submitted ? '<span class="badge badge-green">✓ Submitted to Admin</span>' : '<span class="badge badge-blue">Draft</span>'}
+              </div>
+              <h3 class="font-bold text-stone-900 dark:text-stone-100 text-base">${p.submit_subject || 'Generated Question Paper'}</h3>
+              <p class="text-xs text-stone-500 dark:text-stone-400">Created: ${new Date(p.created_at).toLocaleString()}</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button class="btn btn-outline btn-sm" onclick="previewHistoryPaper(${p.id})">👁 Preview & Print</button>
+              ${!p.submitted ? `<button class="btn btn-amber btn-sm" onclick="openSubmitModal(${p.id})">📤 Submit to Admin</button>` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    function previewHistoryPaper(paperId) {
+      const p = window._historyPapers?.find(item => item.id === paperId);
+      if (!p) return;
+      currentPaperObj = { ...p.paper, subject_code: p.subject_code };
+      renderPaperView(currentPaperObj);
+      openModal('paper-modal');
+    }
+
+    let activeSubmitPaperId = null;
+    function openSubmitModal(paperId) {
+      activeSubmitPaperId = paperId;
+      openModal('submit-modal');
+    }
+
+    async function confirmSubmit() {
+      if (!activeSubmitPaperId) return;
+      const subject = document.getElementById('submit-subject').value.trim();
+      const department = document.getElementById('submit-dept').value.trim();
+
+      try {
+        await apiCall(`/api/paper/submit/${activeSubmitPaperId}`, 'POST', { subject, department });
+        closeModal('submit-modal');
+        showToast('Paper submitted to Admin successfully!', '🎉');
+        loadHistory();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    // Admin Console
+    async function loadAdminData() {
+      try {
+        const res = await apiCall('/api/admin/overview');
+        window._adminData = res;
+
+        // Metrics
+        if (res.stats) {
+          document.getElementById('stat-total-users').innerText = res.stats.total_users || 0;
+          document.getElementById('stat-total-submitted').innerText = res.stats.total_submitted || 0;
+          document.getElementById('stat-total-questions').innerText = res.stats.total_questions || 0;
+          document.getElementById('stat-total-papers').innerText = res.stats.total_papers || 0;
+        }
+
+        renderAdminUsers(res.users);
+        renderAdminSubmittedPapers(res.submitted_papers);
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    function showAdminTab(tab) {
+      document.getElementById('atab-users').classList.toggle('hidden', tab !== 'users');
+      document.getElementById('atab-subs').classList.toggle('hidden', tab !== 'subs');
+      document.getElementById('atab-users-btn').className = tab === 'users' ? 'btn btn-amber btn-sm' : 'btn btn-outline btn-sm';
+      document.getElementById('atab-subs-btn').className = tab === 'subs' ? 'btn btn-amber btn-sm' : 'btn btn-outline btn-sm';
+    }
+
+    function renderAdminUsers(users) {
+      const container = document.getElementById('admin-users-content');
+      
+      // Populate warn user select dropdown in Admin Panel
+      const selectEl = document.getElementById('admin-warn-user-select');
+      if (selectEl) {
+        selectEl.innerHTML = '<option value="">Choose Faculty Member...</option>';
+        users.filter(u => !u.is_admin).forEach(u => {
+          selectEl.innerHTML += `<option value="${u.id}">${u.name} (${u.email})</option>`;
+        });
+      }
+
+      container.innerHTML = users.map(u => `
+        <div class="card mb-3 p-4">
+          <div class="flex justify-between items-start flex-wrap gap-2 mb-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-stone-900 dark:text-stone-100">${u.name}</span>
+                ${u.is_admin ? '<span class="badge badge-amber">Admin</span>' : '<span class="badge badge-blue">Faculty</span>'}
+                ${u.is_active ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-red">Deactivated</span>'}
+              </div>
+              <p class="text-xs text-stone-500 dark:text-stone-400 font-mono">${u.email}</p>
+            </div>
+            ${!u.is_admin ? `
+              <div class="flex items-center gap-2 flex-wrap">
+                ${u.warning_msg && u.warning_status !== 'resolved' ? `<button class="btn btn-green btn-sm" onclick="markWarningResolved(${u.id})">✓ Mark Resolved</button>` : ''}
+                <button class="btn btn-outline btn-sm" onclick="sendAdminWarningPrompt(${u.id}, '${u.name}')">⚠️ Issue Warning</button>
+                <button class="btn btn-outline btn-sm ${u.is_active ? 'text-red-500 border-red-300' : 'text-green-500 border-green-300'}" onclick="toggleUserActive(${u.id})">${u.is_active ? 'Deactivate' : 'Activate'}</button>
+              </div>
+            ` : ''}
+          </div>
+          ${u.warning_msg ? `
+            <div class="text-xs bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200 dark:border-amber-900/50 mt-2">
+              <div class="flex justify-between items-center mb-1">
+                <p class="font-bold text-amber-800 dark:text-amber-400">Notice Sent: ${u.warning_msg}</p>
+                <span class="badge ${u.warning_status === 'resolved' ? 'badge-green' : 'badge-amber'}">${(u.warning_status || 'OPEN').toUpperCase()}</span>
+              </div>
+              ${u.warning_reply ? `<p class="text-stone-700 dark:text-stone-300 mt-1"><strong>Faculty Reply:</strong> ${u.warning_reply}</p>` : '<p class="text-stone-400 italic mt-1">Awaiting faculty reply...</p>'}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    async function markWarningResolved(userId) {
+      try {
+        const res = await apiCall(`/api/admin/warning-status/${userId}`, 'POST', { status: 'resolved' });
+        showToast(res.message, '✓');
+        loadAdminData();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    async function issueNoticeFromForm() {
+      const userId = document.getElementById('admin-warn-user-select').value;
+      const message = document.getElementById('admin-warn-msg-input').value.trim();
+      if (!userId || !message) {
+        showToast('Please select a faculty member and type a notice message.', '⚠️');
+        return;
+      }
+      try {
+        await apiCall(`/api/admin/warn/${userId}`, 'POST', { message });
+        document.getElementById('admin-warn-msg-input').value = '';
+        showToast('Official notice sent to faculty member.', '⚠️');
+        loadAdminData();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    function renderAdminSubmittedPapers(papers) {
+      const container = document.getElementById('admin-subs-content');
+      if (!papers.length) {
+        container.innerHTML = `<div class="text-center py-8 text-stone-400 text-sm">No submitted papers from faculty yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = papers.map(p => `
+        <div class="card mb-3 p-4 flex justify-between items-center flex-wrap gap-3">
+          <div>
+            <span class="badge badge-amber mb-1">${p.submit_dept}</span>
+            <h3 class="font-bold text-base text-stone-900 dark:text-stone-100">${p.submit_subject}</h3>
+            <p class="text-xs text-stone-500 dark:text-stone-400">Submitted by: <strong>${p.user_name}</strong> (${p.user_email}) on ${new Date(p.submitted_at).toLocaleString()}</p>
+          </div>
+          <button class="btn btn-amber btn-sm" onclick="previewSubmittedPaper(${p.paper_id})">👁 Review & Print</button>
+        </div>
+      `).join('');
+    }
+
+    function previewSubmittedPaper(paperId) {
+      const sub = window._adminData?.submitted_papers?.find(p => p.paper_id === paperId);
+      if (!sub) return;
+      currentPaperObj = { ...sub.paper, subject_code: sub.subject_code };
+      renderPaperView(currentPaperObj);
+      openModal('paper-modal');
+    }
+
+    async function sendAdminWarningPrompt(userId, name) {
+      const msg = prompt(`Enter official notice/warning message for ${name}:`);
+      if (!msg || !msg.trim()) return;
+      try {
+        await apiCall(`/api/admin/warn/${userId}`, 'POST', { message: msg.trim() });
+        showToast(`Notice sent to ${name}.`, '⚠️');
+        loadAdminData();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    async function toggleUserActive(userId) {
+      try {
+        const res = await apiCall(`/api/admin/toggle-active/${userId}`, 'POST');
+        showToast(res.message, '✓');
+        loadAdminData();
+      } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    // Auto-init on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      checkAuth();
+    });
+  </script>
+</body>
+</html>
