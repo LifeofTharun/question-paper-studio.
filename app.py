@@ -9,8 +9,9 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect, text
 from werkzeug.security import check_password_hash, generate_password_hash
 
-app = Flask(__name__, template_folder='.')
-db_dir = tempfile.gettempdir() if os.environ.get('VERCEL') else os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__, template_folder=BASE_DIR, static_folder=BASE_DIR)
+db_dir = tempfile.gettempdir() if os.environ.get('VERCEL') else BASE_DIR
 db_path = os.path.join(db_dir, 'questions.db').replace('\\', '/')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -236,6 +237,10 @@ def handle_404(e):
 
 @app.route('/')
 def index():
+    index_path = os.path.join(BASE_DIR, 'index.html')
+    if os.path.exists(index_path):
+        with open(index_path, 'r', encoding='utf-8') as f:
+            return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
     return render_template('index.html')
 
 
