@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import os
 import secrets
+import tempfile
 
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
@@ -9,7 +10,9 @@ from sqlalchemy import inspect, text
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__, template_folder='.')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///questions.db'
+db_dir = tempfile.gettempdir() if os.environ.get('VERCEL') else os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(db_dir, 'questions.db').replace('\\', '/')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
