@@ -247,9 +247,9 @@ def index():
 @app.route('/api/auth/signup', methods=['POST'])
 def signup():
     data = request.get_json(silent=True) or {}
-    name = sanitize(data.get('name', ''))
-    email = sanitize(data.get('email', '')).lower()
-    password = str(data.get('password', ''))
+    name = str(data.get('name', '')).strip()
+    email = str(data.get('email', '')).strip().lower()
+    password = str(data.get('password', '')).strip()
     if not name or '@' not in email or len(password) < 6:
         return jsonify({'error': 'Name, valid email, and a password of at least 6 characters are required.'}), 400
     if User.query.filter_by(email=email).first():
@@ -270,6 +270,7 @@ def signup():
 def login():
     data = request.get_json(silent=True) or {}
     email = str(data.get('email', '')).strip().lower()
+    password = str(data.get('password', '')).strip()
     client_ip = request.remote_addr or 'unknown'
     rate_key = f"{client_ip}:{email}"
 
@@ -277,7 +278,7 @@ def login():
         return jsonify({'error': 'Too many failed login attempts. Account protected. Please try again in 3 minutes.'}), 429
 
     user = User.query.filter_by(email=email).first()
-    if not user or not check_password_hash(user.password_hash, str(data.get('password', ''))):
+    if not user or not check_password_hash(user.password_hash, password):
         function_record_failure(rate_key)
         return jsonify({'error': 'Invalid email or password.'}), 401
     if not user.is_active:
