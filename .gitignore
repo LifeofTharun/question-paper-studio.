@@ -9,4 +9,5 @@ ENV/
 instance/
 *.db
 *.sqlite3
+users_backup.json
 .DS_Store
