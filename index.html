@@ -216,19 +216,19 @@
       <span class="label">Current Password</span>
       <div class="relative mb-3">
         <input id="cp-current" type="password" placeholder="••••••••" class="field pr-10">
-        <button type="button" id="toggle-cp-current" onclick="togglePasswordVisibility('cp-current', 'toggle-cp-current')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+        <button type="button" id="toggle-cp-current" onclick="togglePasswordVisibility('cp-current', 'toggle-cp-current')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none z-20 cursor-pointer p-1" title="Show/Hide Password">👁️</button>
       </div>
       
       <span class="label">New Password</span>
       <div class="relative mb-3">
         <input id="cp-new" type="password" placeholder="Min 6 characters" class="field pr-10">
-        <button type="button" id="toggle-cp-new" onclick="togglePasswordVisibility('cp-new', 'toggle-cp-new')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+        <button type="button" id="toggle-cp-new" onclick="togglePasswordVisibility('cp-new', 'toggle-cp-new')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none z-20 cursor-pointer p-1" title="Show/Hide Password">👁️</button>
       </div>
       
       <span class="label">Confirm New Password</span>
       <div class="relative mb-4">
         <input id="cp-confirm" type="password" placeholder="Re-type new password" class="field pr-10">
-        <button type="button" id="toggle-cp-confirm" onclick="togglePasswordVisibility('cp-confirm', 'toggle-cp-confirm')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+        <button type="button" id="toggle-cp-confirm" onclick="togglePasswordVisibility('cp-confirm', 'toggle-cp-confirm')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none z-20 cursor-pointer p-1" title="Show/Hide Password">👁️</button>
       </div>
       
       <p id="cp-msg" class="text-xs text-red-500 font-medium mb-3 min-h-[16px]"></p>
@@ -330,7 +330,7 @@
           <span class="label">Password</span>
           <div class="relative mb-5">
             <input id="login-password" type="password" placeholder="••••••••" class="field pr-10" onkeyup="if(event.key==='Enter') login()">
-            <button type="button" id="toggle-login-password" onclick="togglePasswordVisibility('login-password', 'toggle-login-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+            <button type="button" id="toggle-login-password" onclick="togglePasswordVisibility('login-password', 'toggle-login-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none z-20 cursor-pointer p-1" title="Show/Hide Password">👁️</button>
           </div>
           <button class="btn btn-amber w-full text-base" onclick="login()">Sign In</button>
         </div>
@@ -345,7 +345,7 @@
           <span class="label">Password</span>
           <div class="relative mb-5">
             <input id="signup-password" type="password" placeholder="Min 6 characters" class="field pr-10" onkeyup="if(event.key==='Enter') signup()">
-            <button type="button" id="toggle-signup-password" onclick="togglePasswordVisibility('signup-password', 'toggle-signup-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+            <button type="button" id="toggle-signup-password" onclick="togglePasswordVisibility('signup-password', 'toggle-signup-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none z-20 cursor-pointer p-1" title="Show/Hide Password">👁️</button>
           </div>
           <button class="btn btn-amber w-full text-base" onclick="signup()">Create Account</button>
         </div>
@@ -776,6 +776,19 @@
         }
       }, 1000);
     })();
+
+    window.togglePasswordVisibility = function(inputId, btnId) {
+      const input = document.getElementById(inputId);
+      const btn = document.getElementById(btnId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (btn) btn.innerText = '🙈';
+      } else {
+        input.type = 'password';
+        if (btn) btn.innerText = '👁️';
+      }
+    };
 
     function getToken() {
       return sessionStorage.getItem('qp_token') || localStorage.getItem('qp_token') || null;
