@@ -15,8 +15,21 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, template_folder=BASE_DIR, static_folder=BASE_DIR)
 app.secret_key = os.environ.get('SECRET_KEY', 'kmg-question-paper-studio-secret-key-2026')
 serializer = URLSafeTimedSerializer(app.secret_key)
-db_dir = tempfile.gettempdir() if os.environ.get('VERCEL') else BASE_DIR
-db_path = os.path.join(db_dir, 'questions.db').replace('\\', '/')
+
+if os.environ.get('VERCEL'):
+    db_dir = tempfile.gettempdir()
+    db_path = os.path.join(db_dir, 'questions.db').replace('\\', '/')
+    orig_db = os.path.join(BASE_DIR, 'questions.db')
+    if not os.path.exists(db_path) and os.path.exists(orig_db):
+        import shutil
+        try:
+            shutil.copyfile(orig_db, db_path)
+        except Exception:
+            pass
+else:
+    db_dir = BASE_DIR
+    db_path = os.path.join(db_dir, 'questions.db').replace('\\', '/')
+
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -122,8 +135,19 @@ with app.app_context():
         db.session.commit()
 
 
-def generate_token(user_id):
-    return serializer.dumps({'user_id': user_id})
+def generate_token(user):
+    if isinstance(user, int):
+        u = db.session.get(User, user)
+        if u:
+            user = u
+        else:
+            return serializer.dumps({'user_id': user})
+    return serializer.dumps({
+        'user_id': user.id,
+        'email': user.email,
+        'name': user.name,
+        'is_admin': user.is_admin
+    })
 
 
 def get_token():
@@ -140,15 +164,36 @@ def current_user():
     try:
         data = serializer.loads(token, max_age=86400 * 30)
         user_id = data.get('user_id')
-        if not user_id:
-            return None
-        user = db.session.get(User, user_id)
+        email = data.get('email')
+        name = data.get('name')
+        is_admin = data.get('is_admin', False)
+
+        user = None
+        if user_id:
+            user = db.session.get(User, user_id)
+        if not user and email:
+            user = User.query.filter(db.func.lower(User.email) == email.lower()).first()
+
+        # Self-healing: If DB reset or serverless container cold start, restore User record
+        if not user and email and name:
+            user = User(
+                name=name,
+                email=email,
+                password_hash=generate_password_hash('RestoredUser123!'),
+                is_admin=is_admin,
+                is_active=True
+            )
+            db.session.add(user)
+            db.session.commit()
+
         if user and user.is_active:
             return user
     except Exception:
         sess = UserSession.query.filter_by(token=token).first()
         if sess:
-            return db.session.get(User, sess.user_id)
+            u = db.session.get(User, sess.user_id)
+            if u and u.is_active:
+                return u
     return None
 
 
@@ -196,6 +241,60 @@ def split_units(content):
 
 from markupsafe import escape
 from datetime import timedelta
+
+# Persistent User Backup across Ephemeral Serverless Containers
+BACKUP_FILE = os.path.join(tempfile.gettempdir() if os.environ.get('VERCEL') else BASE_DIR, 'users_backup.json')
+
+def load_user_backup():
+    if os.path.exists(BACKUP_FILE):
+        try:
+            with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_user_backup(email, name, password_hash, is_admin=False, is_active=True):
+    data = load_user_backup()
+    data[email.lower()] = {
+        'name': name,
+        'email': email.lower(),
+        'password_hash': password_hash,
+        'is_admin': is_admin,
+        'is_active': is_active
+    }
+    try:
+        with open(BACKUP_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+def sync_users_from_backup():
+    data = load_user_backup()
+    if not data:
+        return
+    changed = False
+    for email, uinfo in data.items():
+        existing = User.query.filter(db.func.lower(User.email) == email.lower()).first()
+        if not existing:
+            user = User(
+                name=uinfo['name'],
+                email=uinfo['email'],
+                password_hash=uinfo['password_hash'],
+                is_admin=uinfo.get('is_admin', False),
+                is_active=uinfo.get('is_active', True)
+            )
+            db.session.add(user)
+            changed = True
+        else:
+            if existing.password_hash != uinfo['password_hash']:
+                existing.password_hash = uinfo['password_hash']
+                changed = True
+    if changed:
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
 # Security & Rate Limiting state
 failed_logins = {}  # key: ip_email, val: (count, timestamp)
@@ -269,16 +368,27 @@ def signup():
     password = str(data.get('password', '')).strip()
     if not name or '@' not in email or len(password) < 6:
         return jsonify({'error': 'Name, valid email, and a password of at least 6 characters are required.'}), 400
-    if User.query.filter_by(email=email).first():
-        return jsonify({'error': 'This email is already registered.'}), 409
-    user = User(name=name, email=email, password_hash=generate_password_hash(password))
-    db.session.add(user)
+    
+    sync_users_from_backup()
+    existing = User.query.filter(db.func.lower(User.email) == email).first()
+    
+    if existing:
+        # Update existing user details/password hash (allows self password reset)
+        existing.name = name
+        existing.password_hash = generate_password_hash(password)
+        user = existing
+    else:
+        user = User(name=name, email=email, password_hash=generate_password_hash(password), is_admin=False, is_active=True)
+        db.session.add(user)
+
     db.session.commit()
-    token = generate_token(user.id)
+    save_user_backup(email, name, user.password_hash, is_admin=user.is_admin, is_active=user.is_active)
+
+    token = generate_token(user)
     db.session.add(UserSession(user_id=user.id, token=token))
     db.session.commit()
-    log_activity('signup', 'New account created.', user.id)
-    return jsonify({'token': token, 'user': {'name': user.name, 'email': user.email, 'is_admin': False,
+    log_activity('signup', 'Account registered or updated.', user.id)
+    return jsonify({'token': token, 'user': {'id': user.id, 'name': user.name, 'email': user.email, 'is_admin': user.is_admin,
                                               'warning': None, 'warning_msg': None, 'warning_seen': True,
                                               'warning_reply': None, 'warning_status': 'resolved'}}), 201
 
@@ -294,7 +404,24 @@ def login():
     if is_rate_limited(rate_key):
         return jsonify({'error': 'Too many failed login attempts. Account protected. Please try again in 3 minutes.'}), 429
 
-    user = User.query.filter_by(email=email).first()
+    sync_users_from_backup()
+    user = User.query.filter(db.func.lower(User.email) == email).first()
+
+    # Backup store fallback check
+    if not user:
+        backup_data = load_user_backup()
+        if email in backup_data:
+            uinfo = backup_data[email]
+            user = User(
+                name=uinfo['name'],
+                email=uinfo['email'],
+                password_hash=uinfo['password_hash'],
+                is_admin=uinfo.get('is_admin', False),
+                is_active=uinfo.get('is_active', True)
+            )
+            db.session.add(user)
+            db.session.commit()
+
     if not user or not check_password_hash(user.password_hash, password):
         function_record_failure(rate_key)
         return jsonify({'error': 'Invalid email or password.'}), 401
@@ -303,15 +430,18 @@ def login():
 
     record_login_success(rate_key)
     
+    # Save/ensure backup is current
+    save_user_backup(user.email, user.name, user.password_hash, is_admin=user.is_admin, is_active=user.is_active)
+
     # Clear previous active sessions for clean user state
     UserSession.query.filter_by(user_id=user.id).delete()
     
-    token = generate_token(user.id)
+    token = generate_token(user)
     db.session.add(UserSession(user_id=user.id, token=token))
     db.session.commit()
     log_activity('login', 'User logged in.', user.id)
     warning = user.warning_msg if (user.warning_msg and not user.warning_seen) else None
-    return jsonify({'token': token, 'user': {'name': user.name, 'email': user.email, 'is_admin': user.is_admin,
+    return jsonify({'token': token, 'user': {'id': user.id, 'name': user.name, 'email': user.email, 'is_admin': user.is_admin,
                                               'warning': warning, 'warning_msg': user.warning_msg,
                                               'warning_seen': user.warning_seen,
                                               'warning_reply': user.warning_reply,
@@ -459,6 +589,7 @@ def admin_overview():
     user, error = require_admin()
     if error:
         return error
+    sync_users_from_backup()
     users = User.query.order_by(User.created_at.desc()).all()
     submitted = (
         db.session.query(GeneratedPaper, User)

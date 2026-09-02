@@ -740,16 +740,34 @@
     function getToken() {
       return sessionStorage.getItem('qp_token') || localStorage.getItem('qp_token') || null;
     }
-    function setToken(token) {
+    function getUser() {
+      try {
+        const u = sessionStorage.getItem('qp_user') || localStorage.getItem('qp_user');
+        return u ? JSON.parse(u) : null;
+      } catch (e) { return null; }
+    }
+    function setToken(token, user = null) {
       sessionStorage.setItem('qp_token', token);
       localStorage.setItem('qp_token', token);
+      if (user) setUser(user);
+    }
+    function setUser(user) {
+      if (!user) return clearUser();
+      const str = JSON.stringify(user);
+      sessionStorage.setItem('qp_user', str);
+      localStorage.setItem('qp_user', str);
+    }
+    function clearUser() {
+      sessionStorage.removeItem('qp_user');
+      localStorage.removeItem('qp_user');
     }
     function clearToken() {
       sessionStorage.removeItem('qp_token');
       localStorage.removeItem('qp_token');
+      clearUser();
     }
 
-    let currentUser = null;
+    let currentUser = getUser();
     let currentToken = getToken();
     let currentPaperObj = null;
     let showAnswerKeyMode = false;
@@ -798,11 +816,6 @@
       try {
         const res = await fetch(endpoint, { method, headers, body: body ? JSON.stringify(body) : null });
         const data = await res.json();
-        if (res.status === 401 && currentUser && !isAuthAction) {
-          logout();
-          showToast('Session ended: Your account was accessed from another tab/device.', '🔒');
-          throw new Error('Session ended: Account accessed elsewhere.');
-        }
         if (!res.ok) throw new Error(data.error || 'Server error occurred.');
         return data;
       } catch (err) {
@@ -830,7 +843,7 @@
       currentUser = null;
       try {
         const res = await apiCall('/api/auth/login', 'POST', { email, password });
-        setToken(res.token);
+        setToken(res.token, res.user);
         currentToken = res.token;
         currentUser = res.user;
         initAppView();
@@ -851,7 +864,7 @@
       currentUser = null;
       try {
         const res = await apiCall('/api/auth/signup', 'POST', { name, email, password });
-        setToken(res.token);
+        setToken(res.token, res.user);
         currentToken = res.token;
         currentUser = res.user;
         initAppView();
@@ -875,14 +888,21 @@
 
     async function checkAuth() {
       const token = getToken();
+      const cachedUser = getUser();
+
+      if (cachedUser) {
+        currentUser = cachedUser;
+        initAppView();
+      }
+
       if (!token) return;
+
       try {
         const res = await apiCall('/api/me');
-        if (res.user) {
+        if (res && res.user) {
           currentUser = res.user;
+          setUser(res.user);
           initAppView();
-        } else {
-          logout(true);
         }
       } catch (e) {
         console.warn('Auth verification skipped on refresh:', e);
@@ -1472,9 +1492,9 @@
           document.getElementById('stat-total-papers').innerText = res.stats.total_papers || 0;
         }
 
-        renderAdminUsers(res.users);
-        renderAdminSubmittedPapers(res.submitted_papers);
-      } catch (err) { showToast(err.message, '❌'); }
+        if (res.users) renderAdminUsers(res.users);
+        renderAdminSubmittedPapers(res.submitted_papers || []);
+      } catch (err) { console.error(err); showToast(err.message, '❌'); }
     }
 
     function showAdminTab(tab) {
@@ -1553,7 +1573,7 @@
 
     function renderAdminSubmittedPapers(papers) {
       const container = document.getElementById('admin-subs-content');
-      if (!papers.length) {
+      if (!papers || !papers.length) {
         container.innerHTML = `<div class="text-center py-8 text-stone-400 text-sm">No submitted papers from faculty yet.</div>`;
         return;
       }
