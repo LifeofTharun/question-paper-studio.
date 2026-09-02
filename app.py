@@ -481,6 +481,31 @@ def logout():
     return jsonify({'ok': True})
 
 
+@app.route('/api/auth/change-password', methods=['POST'])
+def change_password():
+    user, error = require_login()
+    if error:
+        return error
+    data = request.get_json(silent=True) or {}
+    current_password = str(data.get('current_password', '')).strip()
+    new_password = str(data.get('new_password', '')).strip()
+
+    if not current_password or not new_password:
+        return jsonify({'error': 'Current password and new password are required.'}), 400
+
+    if len(new_password) < 6:
+        return jsonify({'error': 'New password must be at least 6 characters long.'}), 400
+
+    if not check_password_hash(user.password_hash, current_password):
+        return jsonify({'error': 'Current password is incorrect.'}), 400
+
+    user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+    save_user_backup(user.email, user.name, user.password_hash, is_admin=user.is_admin, is_active=user.is_active)
+    log_activity('change_password', 'Password updated successfully.', user.id)
+    return jsonify({'message': 'Password changed successfully!'}), 200
+
+
 @app.route('/api/me')
 def me():
     user = current_user()

@@ -207,6 +207,30 @@
     </div>
   </div>
 
+  <!-- CHANGE PASSWORD MODAL -->
+  <div id="change-password-modal" class="modal-bg hidden">
+    <div class="modal-box max-w-md w-full">
+      <h3 class="font-bold text-lg mb-1">🔑 Change Password</h3>
+      <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Update your account login password.</p>
+      
+      <span class="label">Current Password</span>
+      <input id="cp-current" type="password" placeholder="••••••••" class="field mb-3">
+      
+      <span class="label">New Password</span>
+      <input id="cp-new" type="password" placeholder="Min 6 characters" class="field mb-3">
+      
+      <span class="label">Confirm New Password</span>
+      <input id="cp-confirm" type="password" placeholder="Re-type new password" class="field mb-4">
+      
+      <p id="cp-msg" class="text-xs text-red-500 font-medium mb-3 min-h-[16px]"></p>
+      
+      <div class="flex gap-3">
+        <button class="btn btn-amber flex-1" onclick="submitChangePassword()">Update Password</button>
+        <button class="btn btn-outline flex-1" onclick="closeModal('change-password-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADD QUESTION MODAL -->
   <div id="add-question-modal" class="modal-bg hidden">
     <div class="modal-box">
@@ -339,6 +363,7 @@
         </div>
         
         <span id="user-label" class="text-xs text-stone-300 hidden sm:block font-medium max-w-[140px] truncate bg-stone-800 px-3 py-1.5 rounded-lg border border-stone-700"></span>
+        <button class="btn btn-outline btn-sm text-amber-400 border-stone-700 hover:bg-stone-800 hover:text-amber-300" onclick="openModal('change-password-modal')" title="Change Password">🔑 Password</button>
         <button class="btn btn-outline btn-sm text-stone-300 border-stone-700 hover:bg-stone-800 hover:text-white" onclick="logout()">Logout</button>
       </div>
     </header>
@@ -1614,6 +1639,38 @@
         showToast(res.message, '✓');
         loadAdminData();
       } catch (err) { showToast(err.message, '❌'); }
+    }
+
+    async function submitChangePassword() {
+      const current_password = document.getElementById('cp-current').value;
+      const new_password = document.getElementById('cp-new').value;
+      const confirm_password = document.getElementById('cp-confirm').value;
+      const msgEl = document.getElementById('cp-msg');
+      msgEl.innerText = '';
+
+      if (!current_password || !new_password) {
+        msgEl.innerText = 'Please enter both current and new passwords.';
+        return;
+      }
+      if (new_password.length < 6) {
+        msgEl.innerText = 'New password must be at least 6 characters long.';
+        return;
+      }
+      if (new_password !== confirm_password) {
+        msgEl.innerText = 'New passwords do not match.';
+        return;
+      }
+
+      try {
+        const res = await apiCall('/api/auth/change-password', 'POST', { current_password, new_password });
+        showToast(res.message, '🎉');
+        document.getElementById('cp-current').value = '';
+        document.getElementById('cp-new').value = '';
+        document.getElementById('cp-confirm').value = '';
+        closeModal('change-password-modal');
+      } catch (err) {
+        msgEl.innerText = err.message;
+      }
     }
 
     // Auto-init on page load
