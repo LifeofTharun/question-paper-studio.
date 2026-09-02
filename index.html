@@ -214,13 +214,22 @@
       <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Update your account login password.</p>
       
       <span class="label">Current Password</span>
-      <input id="cp-current" type="password" placeholder="••••••••" class="field mb-3">
+      <div class="relative mb-3">
+        <input id="cp-current" type="password" placeholder="••••••••" class="field pr-10">
+        <button type="button" id="toggle-cp-current" onclick="togglePasswordVisibility('cp-current', 'toggle-cp-current')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+      </div>
       
       <span class="label">New Password</span>
-      <input id="cp-new" type="password" placeholder="Min 6 characters" class="field mb-3">
+      <div class="relative mb-3">
+        <input id="cp-new" type="password" placeholder="Min 6 characters" class="field pr-10">
+        <button type="button" id="toggle-cp-new" onclick="togglePasswordVisibility('cp-new', 'toggle-cp-new')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+      </div>
       
       <span class="label">Confirm New Password</span>
-      <input id="cp-confirm" type="password" placeholder="Re-type new password" class="field mb-4">
+      <div class="relative mb-4">
+        <input id="cp-confirm" type="password" placeholder="Re-type new password" class="field pr-10">
+        <button type="button" id="toggle-cp-confirm" onclick="togglePasswordVisibility('cp-confirm', 'toggle-cp-confirm')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+      </div>
       
       <p id="cp-msg" class="text-xs text-red-500 font-medium mb-3 min-h-[16px]"></p>
       
@@ -317,9 +326,12 @@
           <h2 class="text-2xl font-bold mb-1">Welcome back 👋</h2>
           <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Sign in to your faculty workspace.</p>
           <span class="label">Faculty Email</span>
-          <input id="login-email" type="email" placeholder="faculty@kmgcollege.edu.in" class="field mb-3">
+          <input id="login-email" type="email" placeholder="faculty@kmgcollege.edu.in" class="field mb-3" onkeyup="if(event.key==='Enter') login()">
           <span class="label">Password</span>
-          <input id="login-password" type="password" placeholder="••••••••" class="field mb-5">
+          <div class="relative mb-5">
+            <input id="login-password" type="password" placeholder="••••••••" class="field pr-10" onkeyup="if(event.key==='Enter') login()">
+            <button type="button" id="toggle-login-password" onclick="togglePasswordVisibility('login-password', 'toggle-login-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+          </div>
           <button class="btn btn-amber w-full text-base" onclick="login()">Sign In</button>
         </div>
 
@@ -329,9 +341,12 @@
           <span class="label">Full Name</span>
           <input id="signup-name" placeholder="Dr. / Prof. Your Name" class="field mb-3">
           <span class="label">Faculty Email</span>
-          <input id="signup-email" type="email" placeholder="yourname@kmgcollege.edu.in" class="field mb-3">
+          <input id="signup-email" type="email" placeholder="yourname@kmgcollege.edu.in" class="field mb-3" onkeyup="if(event.key==='Enter') signup()">
           <span class="label">Password</span>
-          <input id="signup-password" type="password" placeholder="Min 6 characters" class="field mb-5">
+          <div class="relative mb-5">
+            <input id="signup-password" type="password" placeholder="Min 6 characters" class="field pr-10" onkeyup="if(event.key==='Enter') signup()">
+            <button type="button" id="toggle-signup-password" onclick="togglePasswordVisibility('signup-password', 'toggle-signup-password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 text-base focus:outline-none" title="Show/Hide Password">👁️</button>
+          </div>
           <button class="btn btn-amber w-full text-base" onclick="signup()">Create Account</button>
         </div>
         
