@@ -26,9 +26,19 @@ if os.environ.get('VERCEL'):
             shutil.copyfile(orig_db, db_path)
         except Exception:
             pass
+    orig_backup = os.path.join(BASE_DIR, 'users_backup.json')
+    backup_path = os.path.join(db_dir, 'users_backup.json')
+    if not os.path.exists(backup_path) and os.path.exists(orig_backup):
+        import shutil
+        try:
+            shutil.copyfile(orig_backup, backup_path)
+        except Exception:
+            pass
+    BACKUP_FILE = backup_path
 else:
     db_dir = BASE_DIR
     db_path = os.path.join(db_dir, 'questions.db').replace('\\', '/')
+    BACKUP_FILE = os.path.join(BASE_DIR, 'users_backup.json')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -242,16 +252,20 @@ def split_units(content):
 from markupsafe import escape
 from datetime import timedelta
 
-# Persistent User Backup across Ephemeral Serverless Containers
-BACKUP_FILE = os.path.join(tempfile.gettempdir() if os.environ.get('VERCEL') else BASE_DIR, 'users_backup.json')
-
 def load_user_backup():
     if os.path.exists(BACKUP_FILE):
         try:
             with open(BACKUP_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception:
-            return {}
+            pass
+    orig_backup = os.path.join(BASE_DIR, 'users_backup.json')
+    if orig_backup != BACKUP_FILE and os.path.exists(orig_backup):
+        try:
+            with open(orig_backup, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            pass
     return {}
 
 def save_user_backup(email, name, password_hash, is_admin=False, is_active=True):
@@ -268,6 +282,13 @@ def save_user_backup(email, name, password_hash, is_admin=False, is_active=True)
             json.dump(data, f, indent=2)
     except Exception:
         pass
+    local_backup = os.path.join(BASE_DIR, 'users_backup.json')
+    if local_backup != BACKUP_FILE:
+        try:
+            with open(local_backup, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass
 
 def sync_users_from_backup():
     data = load_user_backup()
@@ -295,6 +316,9 @@ def sync_users_from_backup():
             db.session.commit()
         except Exception:
             db.session.rollback()
+
+with app.app_context():
+    sync_users_from_backup()
 
 # Security & Rate Limiting state
 failed_logins = {}  # key: ip_email, val: (count, timestamp)
@@ -332,8 +356,8 @@ def apply_security_headers(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Content-Security-Policy'] = (
-        "default-src 'self' https://cdn.tailwindcss.com https://fonts.googleapis.com https://fonts.gstatic.com; "
-        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
+        "default-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "object-src 'none'; frame-ancestors 'none';"
@@ -425,26 +449,9 @@ def login():
             db.session.add(user)
             db.session.commit()
 
-    # Self-provisioning on ephemeral serverless containers if missing from local SQLite
-    if not user:
-        username_part = email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
-        display_name = f"Prof. {username_part}"
-        user = User(
-            name=display_name,
-            email=email,
-            password_hash=generate_password_hash(password),
-            is_admin=False,
-            is_active=True
-        )
-        db.session.add(user)
-        db.session.commit()
-        save_user_backup(email, display_name, user.password_hash, is_admin=False, is_active=True)
-
-    if not check_password_hash(user.password_hash, password):
-        # Update password hash if user registered or updated password on another container instance
-        user.password_hash = generate_password_hash(password)
-        db.session.commit()
-        save_user_backup(user.email, user.name, user.password_hash, is_admin=user.is_admin, is_active=user.is_active)
+    if not user or not check_password_hash(user.password_hash, password):
+        function_record_failure(rate_key)
+        return jsonify({'error': 'Invalid email or password.'}), 401
 
     if not user.is_active:
         return jsonify({'error': 'Your account has been deactivated. Please contact the administrator.'}), 403
@@ -490,10 +497,18 @@ def change_password():
     current_password = str(data.get('current_password', '')).strip()
     new_password = str(data.get('new_password', '')).strip()
 
-    if not new_password or len(new_password) < 6:
+    if not current_password or not new_password:
+        return jsonify({'error': 'Current password and new password are required.'}), 400
+
+    if len(new_password) < 6:
         return jsonify({'error': 'New password must be at least 6 characters long.'}), 400
 
-    # Since user is already authenticated via JWT session token, update password hash seamlessly across serverless containers
+    if not check_password_hash(user.password_hash, current_password):
+        return jsonify({'error': 'Current password is incorrect.'}), 400
+
+    if current_password == new_password:
+        return jsonify({'error': 'New password cannot be the same as current password.'}), 400
+
     user.password_hash = generate_password_hash(new_password)
     db.session.commit()
     save_user_backup(user.email, user.name, user.password_hash, is_admin=user.is_admin, is_active=user.is_active)
@@ -759,6 +774,24 @@ def delete_question(question_id):
 def get_templates():
     return jsonify({'templates': [
         {
+            'title': 'R Programming',
+            'subject_code': 'AUCAI41',
+            'content': """UNIT 1: Introduction to R & Data Types
+Introduction to R, features of R, RStudio interface, basic mathematical operations, R data types: vectors, matrices, arrays, lists, factors, data frames. Variable assignment and data type inspection.
+
+UNIT 2: Control Structures & Functions
+Decision making: if, if-else, switch; Loop structures: for, while, repeat, break, next. Writing user-defined functions, arguments, return values, recursion.
+
+UNIT 3: Data Manipulation & Data Frames
+Data frames creation, indexing, subsetting, slicing, adding and deleting columns and rows. Handling missing data: is.na, na.omit. Merging and reshaping data frames.
+
+UNIT 4: Mathematical, Statistical Functions & Distributions
+Mathematical functions: abs, sqrt, log, exp; Statistical distribution functions: dnorm, pnorm, qnorm, rnorm, binomial, Poisson distributions. Descriptive statistics: mean, median, mode, variance, standard deviation.
+
+UNIT 5: Object-Oriented Programming & Visualization
+S3 and S4 classes, object-oriented concepts, polymorphism and inheritance. Data visualization using base R graphics: plot, barplot, hist, pie chart, boxplot. Statistical analysis and simulation."""
+        },
+        {
             'title': 'Problem Solving & Python Programming',
             'subject_code': 'AUCPY101',
             'content': """UNIT 1: Computational Thinking & Fundamentals
@@ -990,17 +1023,36 @@ def generate_paper():
         return results
 
     def questions_for(marks, section, needed):
-        qs = Question.query.filter(*question_filter, Question.marks == marks).order_by(db.func.random()).all()
-        if not qs and selected_cos:
-            qs = Question.query.filter(*base_filter, Question.marks == marks).order_by(db.func.random()).all()
-            if qs:
-                fallback_sections.append(section)
         result = []
-        for q in qs:
-            key = q.text.strip().lower()
-            if key not in used_texts:
-                used_texts.add(key)
-                result.append({'id': q.id, 'text': q.text, 'k_level': q.k_level, 'unit': q.unit, 'co': q.co})
+        per_unit = max(1, needed // len(selected_units)) if selected_units else 1
+        for u in selected_units:
+            unit_qs = Question.query.filter(*question_filter, Question.unit == u, Question.marks == marks).order_by(db.func.random()).all()
+            if not unit_qs and selected_cos:
+                unit_qs = Question.query.filter(*base_filter, Question.unit == u, Question.marks == marks).order_by(db.func.random()).all()
+            count = 0
+            for q in unit_qs:
+                if count >= per_unit or len(result) >= needed:
+                    break
+                key = q.text.strip().lower()
+                if key not in used_texts:
+                    used_texts.add(key)
+                    result.append({'id': q.id, 'text': q.text, 'k_level': q.k_level, 'unit': q.unit, 'co': q.co or f'CO{q.unit}'})
+                    count += 1
+
+        if len(result) < needed:
+            qs = Question.query.filter(*question_filter, Question.marks == marks).order_by(Question.unit.asc(), db.func.random()).all()
+            if not qs and selected_cos:
+                qs = Question.query.filter(*base_filter, Question.marks == marks).order_by(Question.unit.asc(), db.func.random()).all()
+                if qs:
+                    fallback_sections.append(section)
+            for q in qs:
+                if len(result) >= needed:
+                    break
+                key = q.text.strip().lower()
+                if key not in used_texts:
+                    used_texts.add(key)
+                    result.append({'id': q.id, 'text': q.text, 'k_level': q.k_level, 'unit': q.unit, 'co': q.co or f'CO{q.unit}'})
+
         if len(result) < needed and syllabus:
             topics = [(u, t) for u, t in extract_topics(syllabus, selected_units) if t.strip().lower() not in used_texts]
             for item in make_topic_questions(topics, marks, needed - len(result)):
@@ -1008,6 +1060,8 @@ def generate_paper():
                 if key not in used_texts:
                     used_texts.add(key)
                     result.append(item)
+
+        result.sort(key=lambda x: int(x.get('unit') or 1))
         return result[:needed]
 
     part_a = questions_for(2, 'Part A', 10) if mode in {'full', '2'} else []

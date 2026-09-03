@@ -1,0 +1,23 @@
+{
+  "testprof@kmgcollege.edu.in": {
+    "name": "Test Professor",
+    "email": "testprof@kmgcollege.edu.in",
+    "password_hash": "scrypt:32768:8:1$SLBOLHRxGWthpCtq$390b4822aa4886d05401ea5d904399ebdcb09c22a8e4fd686ff25e7ab23be253820a103ec2d6f81a75a4e816d5f4e04510a55e0884cdef9eae053d36511ea4dd",
+    "is_admin": false,
+    "is_active": true
+  },
+  "admin@questionpaper.local": {
+    "name": "Administrator",
+    "email": "admin@questionpaper.local",
+    "password_hash": "scrypt:32768:8:1$K0ExP4SgejckYFWE$3265bb1c6028ee2075aa793489f07aa8f4ce571a3abe51e564c5d6bca4f2f45bd8d50051ea93075498d317a233d1e107ae56ec178fb7be0051b58394e5f4c00c",
+    "is_admin": true,
+    "is_active": true
+  },
+  "tharun@kmgcollege.edu.in": {
+    "name": "Prof. Tharun",
+    "email": "tharun@kmgcollege.edu.in",
+    "password_hash": "scrypt:32768:8:1$EduLM1DYOojrWxva$3ca584e67781d9137ca3034523aab8e0465790de8304ec5c5f985596c807e1f1a61c0957a43925ebbb1d08ef5209f90e6023f6a387e875cfb27bd8f477b467e8",
+    "is_admin": false,
+    "is_active": true
+  }
+}
