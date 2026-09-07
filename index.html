@@ -439,11 +439,11 @@
               <div class="grid sm:grid-cols-2 gap-3 mb-3">
                 <div>
                   <span class="label">Subject Title</span>
-                  <input id="syllabus-title" class="field" placeholder="e.g., R Programming" value="R Programming">
+                  <input id="syllabus-title" class="field" placeholder="e.g., Office Automation, Python, DBMS..." value="">
                 </div>
                 <div>
                   <span class="label">Subject Code</span>
-                  <input id="subject-code" class="field" placeholder="e.g., AUCAI41" value="AUCAI41">
+                  <input id="subject-code" class="field" placeholder="e.g., AUCAI42, 22UCA401..." value="">
                 </div>
               </div>
 
@@ -1359,8 +1359,8 @@
     // Render Official KMG Question Paper Format
     function renderPaperView(data) {
       currentPaperObj = data;
-      const subjectTitle = (data.subject_title || document.getElementById('syllabus-title').value.trim() || 'R PROGRAMMING').toUpperCase();
-      const subjectCode = (data.subject_code || document.getElementById('subject-code').value.trim() || 'AUCAI41').toUpperCase();
+      const subjectTitle = (data.subject_title || document.getElementById('syllabus-title').value.trim() || 'QUESTION PAPER').toUpperCase();
+      const subjectCode = (data.subject_code || document.getElementById('subject-code').value.trim() || 'AUCAI11').toUpperCase();
       const examSession = (document.getElementById('exam-session')?.value.trim() || 'APRIL / MAY EXAMINATIONS – 2026').toUpperCase();
       const qpNumber = document.getElementById('qp-number')?.value.trim() || '2117';
       const mode = data.mode || 'full';
