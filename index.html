@@ -204,10 +204,10 @@
 
   <!-- PAPER VIEW / PRINT MODAL -->
   <div id="paper-modal" class="modal-bg hidden">
-    <div class="modal-box max-w-4xl w-full p-4 sm:p-8">
+    <div class="modal-box max-w-4xl w-full p-3 sm:p-6 my-auto">
       <div class="flex justify-between items-center mb-4 no-print border-b border-stone-200 dark:border-stone-700 pb-3 flex-wrap gap-2">
         <div>
-          <h3 class="font-bold text-lg">Question Paper Preview</h3>
+          <h3 class="font-bold text-base sm:text-lg">Question Paper Preview</h3>
           <p class="text-xs text-stone-500 dark:text-stone-400">Formatted according to KMG College Examination Standards</p>
         </div>
         <div class="flex items-center gap-2 flex-wrap no-print">
@@ -216,9 +216,11 @@
         </div>
       </div>
 
-      <!-- Printable Question Paper View -->
-      <div id="paper-print-area" class="paper-print-container bg-white text-stone-900 p-6 sm:p-10 rounded-xl border border-stone-200 shadow-sm text-sm leading-normal font-serif">
-        <!-- Header will be dynamically injected -->
+      <!-- Printable Question Paper View (Mobile Scrollable) -->
+      <div class="overflow-x-auto w-full">
+        <div id="paper-print-area" class="paper-print-container bg-white text-stone-900 p-4 sm:p-8 rounded-xl border border-stone-200 shadow-sm text-sm leading-normal font-serif min-w-[580px] sm:min-w-0">
+          <!-- Header will be dynamically injected -->
+        </div>
       </div>
     </div>
   </div>
@@ -437,10 +439,6 @@
             <div class="card">
               <div class="flex justify-between items-center mb-3">
                 <span class="label mb-0">01 / Syllabus Configuration</span>
-                <!-- Sample Syllabus Loader dropdown -->
-                <select id="template-select" class="text-xs bg-amber-50 dark:bg-stone-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1 font-semibold outline-none cursor-pointer" onchange="loadTemplate(this.value)">
-                  <option value="">⚡ Load Sample Template...</option>
-                </select>
               </div>
 
               <div class="grid sm:grid-cols-2 gap-3 mb-3">
@@ -1016,7 +1014,6 @@
         showPanel('builder');
         checkUserWarning();
         loadSyllabusList();
-        loadTemplates();
         loadQuestions();
         updateBlueprintStats();
       }
@@ -1103,27 +1100,9 @@
       if (panelName === 'admin') loadAdminData();
     }
 
-    // Syllabus Management & Templates
-    async function loadTemplates() {
-      try {
-        const res = await apiCall('/api/templates');
-        const select = document.getElementById('template-select');
-        select.innerHTML = '<option value="">⚡ Load Sample Template...</option>';
-        res.templates.forEach((tpl, idx) => {
-          select.innerHTML += `<option value="${idx}">${tpl.title} (${tpl.subject_code})</option>`;
-        });
-        window._templates = res.templates;
-      } catch(e){}
-    }
-
-    function loadTemplate(idx) {
-      if (idx === '' || !window._templates || !window._templates[idx]) return;
-      const tpl = window._templates[idx];
-      document.getElementById('syllabus-title').value = tpl.title;
-      document.getElementById('subject-code').value = tpl.subject_code;
-      document.getElementById('syllabus').value = tpl.content;
-      showToast(`Loaded template: ${tpl.title}`, '📄');
-      updateBlueprintStats();
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     async function loadSyllabusList() {
@@ -1132,43 +1111,49 @@
         const listEl = document.getElementById('saved-list');
         const selectEl = document.getElementById('saved-select');
 
-        selectEl.innerHTML = '<option value="">Choose saved syllabus...</option>';
-        if (!res.syllabuses.length) {
-          listEl.innerHTML = `<div class="col-span-2 text-center py-8 text-stone-400 text-sm">No saved syllabus found. Create or paste one in the Generator!</div>`;
+        if (selectEl) {
+          selectEl.innerHTML = '<option value="">Choose saved syllabus...</option>';
+        }
+        if (!res.syllabuses || !res.syllabuses.length) {
+          if (listEl) listEl.innerHTML = `<div class="col-span-full text-center py-8 text-stone-400 text-sm">No saved syllabus found. Add a subject & syllabus in the Generator and click 'Save Syllabus'!</div>`;
           return;
         }
 
-        listEl.innerHTML = res.syllabuses.map(s => `
-          <div class="card relative group">
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <span class="badge badge-amber mb-1">${s.subject_code}</span>
-                <h3 class="font-bold text-base text-stone-900 dark:text-stone-100">${s.title}</h3>
-              </div>
-              <button class="btn btn-outline btn-sm text-red-500 border-red-200 dark:border-red-950 hover:bg-red-50" onclick="deleteSyllabus(${s.id})">🗑 Delete</button>
-            </div>
-            <p class="text-xs text-stone-500 dark:text-stone-400 line-clamp-3 mb-3 font-mono">${s.content}</p>
-            <button class="btn btn-amber btn-sm w-full" onclick="useSyllabus(${s.id})">⚡ Load into Generator</button>
-          </div>
-        `).join('');
-
         window._syllabuses = res.syllabuses;
-        res.syllabuses.forEach(s => {
-          selectEl.innerHTML += `<option value="${s.id}">${s.title} (${s.subject_code})</option>`;
-        });
+        if (listEl) {
+          listEl.innerHTML = res.syllabuses.map(s => `
+            <div class="card relative group hover:border-amber-400 transition-all">
+              <div class="flex justify-between items-start mb-2 gap-2">
+                <div>
+                  <span class="badge badge-amber mb-1">${escapeHtml(s.subject_code || 'SUBJECT')}</span>
+                  <h3 class="font-bold text-base text-stone-900 dark:text-stone-100">${escapeHtml(s.title || 'Untitled Syllabus')}</h3>
+                </div>
+                <button class="btn btn-outline btn-sm text-red-500 border-red-200 dark:border-red-950 hover:bg-red-50 text-xs px-2 py-1" onclick="deleteSyllabus(${s.id})">🗑 Delete</button>
+              </div>
+              <p class="text-xs text-stone-500 dark:text-stone-400 line-clamp-3 mb-3 font-mono whitespace-pre-line">${escapeHtml(s.content)}</p>
+              <button class="btn btn-amber btn-sm w-full text-xs" onclick="useSyllabus(${s.id})">⚡ Load into Generator</button>
+            </div>
+          `).join('');
+        }
+
+        if (selectEl) {
+          res.syllabuses.forEach(s => {
+            selectEl.innerHTML += `<option value="${s.id}">${escapeHtml(s.title)} (${escapeHtml(s.subject_code)})</option>`;
+          });
+        }
       } catch (err) {
-        showToast(err.message, '❌');
+        console.error(err);
       }
     }
 
     function useSyllabus(id) {
       const s = window._syllabuses?.find(item => item.id === id);
       if (!s) return;
-      document.getElementById('syllabus-title').value = s.title;
-      document.getElementById('subject-code').value = s.subject_code;
-      document.getElementById('syllabus').value = s.content;
+      document.getElementById('syllabus-title').value = s.title || '';
+      document.getElementById('subject-code').value = s.subject_code || '';
+      document.getElementById('syllabus').value = s.content || '';
       showPanel('builder');
-      showToast(`Loaded ${s.subject_code} into Generator!`, '✅');
+      showToast(`Loaded ${s.title || s.subject_code} into Generator!`, '✅');
       updateBlueprintStats();
     }
 
@@ -1186,13 +1171,15 @@
         msgEl.innerText = 'Please enter syllabus content text.';
         return;
       }
+      msgEl.innerText = 'Saving syllabus...';
       try {
         await apiCall('/api/syllabus', 'POST', { title, subject_code, content });
         msgEl.innerText = 'Syllabus saved to repository successfully!';
-        showToast('Syllabus saved!', '💾');
+        showToast('Syllabus saved to list!', '💾');
         loadSyllabusList();
       } catch (err) {
         msgEl.innerText = err.message;
+        showToast(err.message, '❌');
       }
     }
 

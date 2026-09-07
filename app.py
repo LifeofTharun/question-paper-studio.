@@ -688,8 +688,6 @@ def syllabus_api():
     if request.method == 'GET':
         sync_syllabus_from_backup()
         records = Syllabus.query.filter_by(user_id=user.id).order_by(Syllabus.created_at.desc()).all()
-        if not records:
-            records = Syllabus.query.order_by(Syllabus.created_at.desc()).all()
         return jsonify({'syllabuses': [
             {'id': r.id, 'title': r.title, 'content': r.content,
              'subject_code': r.subject_code, 'unit_names': json.loads(r.unit_names or '{}'),
