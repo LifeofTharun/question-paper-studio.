@@ -19,5 +19,12 @@
     "password_hash": "scrypt:32768:8:1$EduLM1DYOojrWxva$3ca584e67781d9137ca3034523aab8e0465790de8304ec5c5f985596c807e1f1a61c0957a43925ebbb1d08ef5209f90e6023f6a387e875cfb27bd8f477b467e8",
     "is_admin": false,
     "is_active": true
+  },
+  "tharun@gmail.com": {
+    "name": "TharunB",
+    "email": "tharun@gmail.com",
+    "password_hash": "scrypt:32768:8:1$MzOZa9tJpDT3jwfS$570846f1d59e441e18e7d38b6ecf343dcddce830c771e177ec10f8afd7a6259c3e021863c7e7ab7fdc88a1b9afc563e21488635c1aafba4db2a5ba584b32f58c",
+    "is_admin": false,
+    "is_active": true
   }
 }
