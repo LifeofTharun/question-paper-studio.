@@ -9,7 +9,7 @@
   "admin@questionpaper.local": {
     "name": "Administrator",
     "email": "admin@questionpaper.local",
-    "password_hash": "scrypt:32768:8:1$mOLbm97IJ0vwdt17$dbe1630d61236846dc14bb3ff29cf4d456ab0a84ea1b8ed75dc07137bdbf2e1ae30bb6ff586ffd12d2e83af57253269a567b821e07fff511e14273dd52025740",
+    "password_hash": "scrypt:32768:8:1$nHCtXoFn6Cbf5FKr$62d254534f7e2b601ab00448adf3b95c1cbc856434f76eec69a2b5fee25652b0f93879680f44fcc137f08a4c0f9fcde420cd6ced806508c0d08c69807b48fe0d",
     "is_admin": true,
     "is_active": true
   },
@@ -25,6 +25,13 @@
     "email": "tharun@gmail.com",
     "password_hash": "scrypt:32768:8:1$MzOZa9tJpDT3jwfS$570846f1d59e441e18e7d38b6ecf343dcddce830c771e177ec10f8afd7a6259c3e021863c7e7ab7fdc88a1b9afc563e21488635c1aafba4db2a5ba584b32f58c",
     "is_admin": false,
+    "is_active": true
+  },
+  "admin@kmgcollege.edu.in": {
+    "name": "Administrator",
+    "email": "admin@kmgcollege.edu.in",
+    "password_hash": "scrypt:32768:8:1$nHCtXoFn6Cbf5FKr$62d254534f7e2b601ab00448adf3b95c1cbc856434f76eec69a2b5fee25652b0f93879680f44fcc137f08a4c0f9fcde420cd6ced806508c0d08c69807b48fe0d",
+    "is_admin": true,
     "is_active": true
   }
 }
