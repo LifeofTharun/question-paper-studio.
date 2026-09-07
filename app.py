@@ -139,10 +139,20 @@ with app.app_context():
         db.session.add(User(
             name='Administrator',
             email='admin@questionpaper.local',
-            password_hash=generate_password_hash('admin123'),
+            password_hash=generate_password_hash('Admin@Kmg#2026$Secure!'),
             is_admin=True,
         ))
         db.session.commit()
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
 
 
 def generate_token(user):

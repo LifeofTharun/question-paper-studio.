@@ -9,7 +9,7 @@
   "admin@questionpaper.local": {
     "name": "Administrator",
     "email": "admin@questionpaper.local",
-    "password_hash": "scrypt:32768:8:1$K0ExP4SgejckYFWE$3265bb1c6028ee2075aa793489f07aa8f4ce571a3abe51e564c5d6bca4f2f45bd8d50051ea93075498d317a233d1e107ae56ec178fb7be0051b58394e5f4c00c",
+    "password_hash": "scrypt:32768:8:1$mOLbm97IJ0vwdt17$dbe1630d61236846dc14bb3ff29cf4d456ab0a84ea1b8ed75dc07137bdbf2e1ae30bb6ff586ffd12d2e83af57253269a567b821e07fff511e14273dd52025740",
     "is_admin": true,
     "is_active": true
   },
