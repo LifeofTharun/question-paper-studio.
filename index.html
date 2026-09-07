@@ -1331,6 +1331,7 @@
       const cos = Array.from(document.querySelectorAll('.co:checked')).map(cb => cb.value);
       const syllabus = document.getElementById('syllabus').value.trim();
       const subject_code = document.getElementById('subject-code').value.trim() || 'AUCAI11';
+      const subject_title = document.getElementById('syllabus-title').value.trim() || 'Question Paper';
 
       if (!units.length || !k_levels.length) {
         showToast('Please select at least 1 Unit and K-Level!', '⚠️');
@@ -1338,9 +1339,9 @@
       }
 
       try {
-        showToast('Generating question paper...', '⚡');
+        showToast('Generating question paper from syllabus...', '⚡');
         const res = await apiCall('/api/generate', 'POST', {
-          units, k_levels, cos, syllabus, subject_code, mode
+          units, k_levels, cos, syllabus, subject_code, subject_title, mode
         });
 
         if (res.warnings && res.warnings.length) {
@@ -1358,7 +1359,7 @@
     // Render Official KMG Question Paper Format
     function renderPaperView(data) {
       currentPaperObj = data;
-      const subjectTitle = (document.getElementById('syllabus-title').value.trim() || 'R PROGRAMMING').toUpperCase();
+      const subjectTitle = (data.subject_title || document.getElementById('syllabus-title').value.trim() || 'R PROGRAMMING').toUpperCase();
       const subjectCode = (data.subject_code || document.getElementById('subject-code').value.trim() || 'AUCAI41').toUpperCase();
       const examSession = (document.getElementById('exam-session')?.value.trim() || 'APRIL / MAY EXAMINATIONS – 2026').toUpperCase();
       const qpNumber = document.getElementById('qp-number')?.value.trim() || '2117';
@@ -1590,7 +1591,7 @@
     function previewHistoryPaper(paperId) {
       const p = window._historyPapers?.find(item => item.id === paperId);
       if (!p) return;
-      currentPaperObj = { ...p.paper, subject_code: p.subject_code };
+      currentPaperObj = { ...p.paper, subject_code: p.subject_code, subject_title: p.submit_subject || p.paper?.subject_title };
       renderPaperView(currentPaperObj);
       openModal('paper-modal');
     }

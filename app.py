@@ -231,22 +231,51 @@ def require_admin():
     return user, None
 
 
-def split_units(content):
+def split_units(content, target_units=None):
     import re
+    if not content or not content.strip():
+        return {}
     lines = content.splitlines()
     units = {}
     current = None
+    roman = {'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'ONE': 1, 'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5}
+    unit_pat = re.compile(
+        r'^\s*(?:UNIT|MODULE|CHAPTER|PART|SECTION|BLOCK)\s*[-:–—._ ]*\s*([0-9]+|[IVX]+|ONE|TWO|THREE|FOUR|FIVE)\b\s*[:–—._-]?\s*(.*)$',
+        re.I
+    )
     for line in lines:
-        match = re.match(r'^\s*UNIT\s*[-: ]?\s*([1-5IVX]+)\s*[:.-]?\s*(.*)$', line, re.I)
-        if match:
-            raw_unit = match.group(1).upper()
-            roman = {'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5}
-            current = roman.get(raw_unit, int(raw_unit) if raw_unit.isdigit() else None)
-            if current:
-                units[str(current)] = match.group(2).strip()
-        elif current:
-            units[str(current)] = (units.get(str(current), '') + '\n' + line).strip()
+        sline = line.strip()
+        if not sline:
+            continue
+        m = unit_pat.match(sline)
+        if m:
+            raw = m.group(1).upper()
+            num = int(raw) if raw.isdigit() else roman.get(raw)
+            if num and 1 <= num <= 5:
+                current = str(num)
+                rest = m.group(2).strip()
+                units[current] = rest
+                continue
+        if current:
+            units[current] = (units.get(current, '') + '\n' + sline).strip()
+
+    active = [str(u) for u in (target_units or [1, 2, 3, 4, 5])]
+    if len(units) < len(active):
+        if not units:
+            chunks = [c.strip() for c in re.split(r'\n\s*\n+', content.strip()) if c.strip()]
+            if len(chunks) >= len(active):
+                for i, u in enumerate(active):
+                    units[u] = chunks[i]
+            else:
+                for u in active:
+                    units[u] = content
+        else:
+            first_val = next(iter(units.values()))
+            for u in active:
+                if u not in units:
+                    units[u] = first_val
     return units or {'1': content}
+
 
 
 from markupsafe import escape
@@ -951,6 +980,146 @@ def toggle_active(user_id):
     return jsonify({'message': f'{user.name} {status}.', 'is_active': user.is_active})
 
 
+QUESTION_TEMPLATES = {
+    2: {
+        'K1': [
+            "Define {topic} and state its primary purpose.",
+            "What is {topic}? State its key characteristics.",
+            "List any two essential features of {topic}.",
+            "State the basic role of {topic} in computer systems.",
+            "Mention two practical applications of {topic}.",
+            "Recall the fundamental concepts behind {topic}.",
+            "List the advantages of using {topic}.",
+            "Identify the main components associated with {topic}.",
+            "Name the standard types or categories of {topic}.",
+            "What are the primary functions performed by {topic}?"
+        ],
+        'K2': [
+            "Explain {topic} in brief with a simple example.",
+            "Briefly describe the working principle of {topic}.",
+            "Differentiate between {topic} and {other_topic}.",
+            "Illustrate how {topic} operates in standard environments.",
+            "Distinguish between the purpose and practical functioning of {topic}.",
+            "Clarify the importance of {topic} with a suitable use case.",
+            "Summarize the key benefits and limitations of {topic}.",
+            "Give two practical examples demonstrating {topic}.",
+            "Briefly explain the role and significance of {topic}.",
+            "Compare the characteristics of {topic} and {other_topic}."
+        ],
+        'K3': [
+            "Demonstrate how {topic} is initialized, configured, or used.",
+            "Apply the concept of {topic} to execute a basic task.",
+            "Show how {topic} can be utilized effectively with an example.",
+            "Construct a simple outline or syntax demonstrating {topic}."
+        ],
+        'K4': [
+            "Analyze the operational bottlenecks or errors associated with {topic}.",
+            "Compare the performance aspects of {topic} with {other_topic}.",
+            "Examine the primary advantages and constraints of {topic}."
+        ],
+        'K5': [
+            "Assess the necessity of {topic} in modern software/computing environments.",
+            "Justify why {topic} is preferred in standard system implementations."
+        ],
+        'K6': [
+            "Formulate a minimal schematic or structure representing {topic}.",
+            "Design a basic procedure demonstrating the application of {topic}."
+        ]
+    },
+    5: {
+        'K1': [
+            "State the core principles, types, and structural organization of {topic} in detail.",
+            "Describe the major components, classifications, and primary features of {topic}."
+        ],
+        'K2': [
+            "Explain the working mechanism and operational principles of {topic} with neat illustrations.",
+            "Describe {topic} with an architectural/schematic diagram and explain its features.",
+            "Differentiate {topic} and {other_topic} with detailed comparison metrics.",
+            "Discuss the characteristics, advantages, and real-world applications of {topic}.",
+            "Explain the step-by-step workflow of {topic} with an illustrative diagram.",
+            "Summarize the major techniques, tools, and procedures associated with {topic}."
+        ],
+        'K3': [
+            "Demonstrate the practical implementation and execution of {topic} with a comprehensive example.",
+            "Apply {topic} to solve a practical scenario, explaining each step clearly.",
+            "Illustrate the complete workflow and lifecycle of {topic} with a flowchart or diagram.",
+            "Construct a functional solution demonstrating the capabilities of {topic}."
+        ],
+        'K4': [
+            "Analyze {topic} critically and examine its performance, scalability, and operational trade-offs.",
+            "Investigate the primary differences and similarities between {topic} and {other_topic}.",
+            "Deconstruct the architecture of {topic} and evaluate each sub-component's role."
+        ],
+        'K5': [
+            "Evaluate the criteria for selecting {topic} in enterprise systems and justify your choice.",
+            "Critically appraise the advantages, limitations, and future scope of {topic}."
+        ],
+        'K6': [
+            "Design and develop an architectural solution implementing {topic} with suitable diagrams.",
+            "Formulate a robust structural model or procedure based on {topic} for an application scenario."
+        ]
+    },
+    10: {
+        'K2': [
+            "Explain in comprehensive detail the architecture, working principles, and complete workflow of {topic} with clear diagrams.",
+            "(a) Explain the fundamental concepts, structures, and types of {topic} (5 Marks)\n(b) Discuss the working principles and practical applications of {other_topic} with diagrams (5 Marks)"
+        ],
+        'K3': [
+            "Demonstrate the end-to-end design and implementation of {topic} using real-world case studies and illustrative examples.",
+            "(a) Apply {topic} to formulate a step-by-step practical implementation (5 Marks)\n(b) Explain the working and optimization of {other_topic} with neat illustrations (5 Marks)"
+        ],
+        'K4': [
+            "Provide an in-depth analytical review of {topic}. Examine its theoretical foundations, structural complexity, and comparative performance benchmarks.",
+            "Critically analyze the design challenges, architectural bottlenecks, and optimization strategies in {topic}."
+        ],
+        'K5': [
+            "Evaluate the structural organization and deployment strategies of {topic}. Formulate a detailed appraisal of its efficiency and fault tolerance.",
+            "Assess the integration of {topic} and {other_topic} in modern computing environments with relevant illustrations."
+        ],
+        'K6': [
+            "Design a complete high-performance system leveraging {topic}. Formulate its architectural blueprints, operational workflows, and evaluate its reliability.",
+            "Formulate an optimal end-to-end framework utilizing {topic} to address complex real-world requirements, supported by comprehensive diagrams."
+        ]
+    }
+}
+
+
+def _clean_topic_str(t):
+    import re as _re
+    t = _re.sub(r'^\s*(?:introductory\s+concepts|introduction\s+to|overview\s+of|the\s+concept\s+of|features\s+of|understanding|basics\s+of|concept\s+of)\s*[:–—\- ]*', '', t, flags=_re.I)
+    t = _re.sub(r'[\&\|\+]+its\s+features', '', t, flags=_re.I)
+    t = _re.sub(r'^[0-9\.\-\*\•\(\) ]+', '', t)
+    t = _re.sub(r'\s*\(.*?\)\s*', ' ', t)
+    t = _re.sub(r'\s+\b(?:of|in|to|for|with|on|and|by|the|a|an|from|at)\s*$', '', t, flags=_re.I)
+    t = _re.sub(r'^\s*\b(?:of|in|to|for|with|on|and|by|the|a|an|from|at)\s+', '', t, flags=_re.I)
+    t = t.strip(' .-_:;()[]{}*•\t\r\n')
+    return t
+
+
+def _extract_unit_topics(block):
+    import re as _re
+    parts = _re.split(r'[\n;•\*]+|(?<=[a-zA-Z0-9])\s*[–—]\s*|(?<=[a-zA-Z0-9])\s*-\s*(?=[a-zA-Z0-9])|,\s*|\.\s+(?=[A-Z])|:\s+', block)
+    topics = []
+    seen = set()
+    for raw in parts:
+        c = _clean_topic_str(raw)
+        c_lower = c.lower()
+        if len(c) >= 3 and len(c) <= 60 and not c.isdigit() and c_lower not in seen:
+            if c_lower not in {'and', 'or', 'etc', 'etc.', 'the', 'an', 'unit', 'features', 'options'}:
+                seen.add(c_lower)
+                topics.append(c)
+    return topics
+
+
+def _make_answer_key(topic, marks):
+    if marks == 2:
+        return f"{topic}: Core concept defining foundational operations, syntax, and characteristics. Essential for standard execution and modular handling."
+    elif marks == 5:
+        return f"Comprehensive explanation of {topic}: Involves structural design, operational workflow, component interactions, and practical applications with illustrative diagrams."
+    else:
+        return f"In-depth analysis and implementation of {topic}: Covers architectural framework, end-to-end processing lifecycle, performance optimization, and real-world deployment."
+
+
 @app.route('/api/generate', methods=['POST'])
 def generate_paper():
     user, error = require_login()
@@ -966,12 +1135,11 @@ def generate_paper():
     selected_units = data.get('units', [])
     selected_k_levels = data.get('k_levels', [])
     selected_cos = data.get('cos', [])
-    syllabus = data.get('syllabus', '')
+    syllabus = str(data.get('syllabus', '')).strip()
     subject_code = str(data.get('subject_code', 'AUCAI11')).strip() or 'AUCAI11'
+    subject_title = str(data.get('subject_title', '')).strip() or str(data.get('title', '')).strip() or 'Question Paper'
     mode = str(data.get('mode', 'full')).lower()
 
-    if not isinstance(syllabus, str):
-        return jsonify({'error': 'Syllabus must be provided as text.'}), 400
     if not isinstance(selected_units, list) or not all(
         isinstance(u, int) and not isinstance(u, bool) and 1 <= u <= 5 for u in selected_units
     ):
@@ -988,109 +1156,209 @@ def generate_paper():
     if mode not in {'full', '2', '5', '10'}:
         return jsonify({'error': 'Choose Full Paper, 2 Marks, 5 Marks, or 10 Marks.'}), 400
 
-    import re as _re, random as _random
+    import random as _random
 
-    base_filter = [Question.unit.in_(selected_units), Question.k_level.in_(selected_k_levels)]
-    question_filter = list(base_filter)
-    if selected_cos:
-        question_filter.append(Question.co.in_(selected_cos))
+    # Extract recent papers to prevent repetitive questions across multiple generations
+    recent_history_texts = set()
+    recent_history_topics = set()
+    try:
+        past_papers = GeneratedPaper.query.filter_by(user_id=user.id).order_by(GeneratedPaper.id.desc()).limit(6).all()
+        for pp in past_papers:
+            p_data = json.loads(pp.paper_json)
+            for sec in ['part_a', 'part_b', 'part_c']:
+                for q_item in p_data.get(sec, []):
+                    txt = str(q_item.get('text', '')).strip().lower()
+                    if txt:
+                        recent_history_texts.add(txt)
+                    tpc = str(q_item.get('topic', '')).strip().lower()
+                    if tpc:
+                        recent_history_topics.add(tpc)
+    except Exception:
+        pass
 
-    fallback_sections = []
+    part_a = []
+    part_b = []
+    part_c = []
     used_texts = set()
+    used_topic_k_pairs = set()
 
-    def extract_topics(text, units):
-        blocks = split_units(text)
-        topics = []
-        for u in units:
-            block = blocks.get(str(u), '')
-            for t in _re.split(r'[,\n;]+', block):
-                t = t.strip().strip('-').strip()
-                if len(t) > 8:
-                    topics.append((u, t))
-        return topics
-
-    def make_topic_questions(topics, marks, needed):
-        verbs = {'K1': 'Define', 'K2': 'Explain', 'K3': 'Apply', 'K4': 'Analyze', 'K5': 'Evaluate', 'K6': 'Design'}
-        suffix = {2: 'with a brief example.', 5: 'with a suitable example and explanation.', 10: 'in detail with a complete example program or diagram.'}
-        _random.shuffle(topics)
-        results = []
-        for unit, topic in topics:
-            if len(results) >= needed:
-                break
-            k = _random.choice(selected_k_levels) if selected_k_levels else 'K1'
-            co = _random.choice(selected_cos) if selected_cos else f'CO{unit}'
-            results.append({'id': None, 'text': f"{verbs.get(k, 'Explain')} {topic} {suffix.get(marks, '.')}", 'k_level': k, 'unit': unit, 'co': co})
-        return results
-
-    def questions_for(marks, section, needed):
-        result = []
-        per_unit = max(1, needed // len(selected_units)) if selected_units else 1
+    # PRIMARY PATH: Generate directly from provided syllabus
+    if syllabus and len(syllabus) > 10:
+        unit_blocks = split_units(syllabus, selected_units)
+        unit_topics = {}
         for u in selected_units:
-            unit_qs = Question.query.filter(*question_filter, Question.unit == u, Question.marks == marks).order_by(db.func.random()).all()
-            if not unit_qs and selected_cos:
-                unit_qs = Question.query.filter(*base_filter, Question.unit == u, Question.marks == marks).order_by(db.func.random()).all()
-            count = 0
-            for q in unit_qs:
-                if count >= per_unit or len(result) >= needed:
+            blk = unit_blocks.get(str(u), '')
+            topics = _extract_unit_topics(blk)
+            if not topics:
+                topics = [f"Unit {u} Core Concept", f"Unit {u} Principles", f"Unit {u} Architecture", f"Unit {u} Applications"]
+            unit_topics[u] = topics
+
+        def get_syllabus_question(u, marks, target_k):
+            pool = unit_topics.get(u, [])
+            candidates = []
+            for t in pool:
+                pair = (t.lower(), marks, target_k)
+                penalty = 0
+                if t.lower() in recent_history_topics:
+                    penalty += 10
+                if pair in used_topic_k_pairs:
+                    penalty += 30
+                candidates.append((penalty, t))
+            candidates.sort(key=lambda x: (x[0], _random.random()))
+            chosen_topic = candidates[0][1]
+            other_candidates = [t for t in pool if t.lower() != chosen_topic.lower()]
+            other_topic = _random.choice(other_candidates) if other_candidates else f"{chosen_topic} techniques"
+
+            templates_pool = QUESTION_TEMPLATES.get(marks, {}).get(target_k, [])
+            if not templates_pool:
+                templates_pool = QUESTION_TEMPLATES.get(marks, {}).get('K2', ["Explain the concepts and importance of {topic} with an illustrative example."])
+
+            shuffled_templates = list(templates_pool)
+            _random.shuffle(shuffled_templates)
+
+            chosen_text = None
+            for tmpl in shuffled_templates:
+                text_cand = tmpl.format(topic=chosen_topic, other_topic=other_topic)
+                t_lower = text_cand.strip().lower()
+                if t_lower not in used_texts and t_lower not in recent_history_texts:
+                    chosen_text = text_cand
                     break
-                key = q.text.strip().lower()
-                if key not in used_texts:
-                    used_texts.add(key)
-                    result.append({'id': q.id, 'text': q.text, 'k_level': q.k_level, 'unit': q.unit, 'co': q.co or f'CO{q.unit}'})
-                    count += 1
+            if not chosen_text:
+                for tmpl in shuffled_templates:
+                    text_cand = tmpl.format(topic=chosen_topic, other_topic=other_topic)
+                    t_lower = text_cand.strip().lower()
+                    if t_lower not in used_texts:
+                        chosen_text = text_cand
+                        break
+            if not chosen_text:
+                chosen_text = f"Explain the fundamental mechanisms and significance of {chosen_topic} with an illustrative diagram."
 
-        if len(result) < needed:
-            qs = Question.query.filter(*question_filter, Question.marks == marks).order_by(Question.unit.asc(), db.func.random()).all()
-            if not qs and selected_cos:
-                qs = Question.query.filter(*base_filter, Question.marks == marks).order_by(Question.unit.asc(), db.func.random()).all()
-                if qs:
-                    fallback_sections.append(section)
-            for q in qs:
-                if len(result) >= needed:
-                    break
-                key = q.text.strip().lower()
-                if key not in used_texts:
-                    used_texts.add(key)
-                    result.append({'id': q.id, 'text': q.text, 'k_level': q.k_level, 'unit': q.unit, 'co': q.co or f'CO{q.unit}'})
+            used_texts.add(chosen_text.strip().lower())
+            used_topic_k_pairs.add((chosen_topic.lower(), marks, target_k))
+            
+            # Map CO: CO1 for Unit 1, CO2 for Unit 2, or user selected CO matching unit
+            co_assigned = f'CO{u}'
+            if selected_cos:
+                matched_cos = [c for c in selected_cos if c.endswith(str(u))]
+                if matched_cos:
+                    co_assigned = matched_cos[0]
+                else:
+                    co_assigned = selected_cos[0]
 
-        if len(result) < needed and syllabus:
-            topics = [(u, t) for u, t in extract_topics(syllabus, selected_units) if t.strip().lower() not in used_texts]
-            for item in make_topic_questions(topics, marks, needed - len(result)):
-                key = item['text'].strip().lower()
-                if key not in used_texts:
-                    used_texts.add(key)
-                    result.append(item)
+            return {
+                'id': None,
+                'text': chosen_text,
+                'k_level': target_k,
+                'unit': u,
+                'co': co_assigned,
+                'marks': marks,
+                'topic': chosen_topic,
+                'correct_answer': _make_answer_key(chosen_topic, marks)
+            }
 
-        result.sort(key=lambda x: int(x.get('unit') or 1))
-        return result[:needed]
+        # SECTION A (2 Marks, 10 Questions total in Full mode)
+        if mode in {'full', '2'}:
+            k_pool = [k for k in selected_k_levels if k in ['K1', 'K2', 'K3']] or selected_k_levels or ['K1', 'K2']
+            target_per_unit = max(1, 10 // len(selected_units))
+            for u in selected_units:
+                for _ in range(target_per_unit):
+                    if len(part_a) < 10:
+                        k = _random.choice(k_pool)
+                        part_a.append(get_syllabus_question(u, 2, k))
+            # If still less than 10, fill from selected units
+            while len(part_a) < 10:
+                u = _random.choice(selected_units)
+                k = _random.choice(k_pool)
+                part_a.append(get_syllabus_question(u, 2, k))
 
-    part_a = questions_for(2, 'Part A', 10) if mode in {'full', '2'} else []
-    part_b = questions_for(5, 'Part B', 10) if mode in {'full', '5'} else []
-    part_c = questions_for(10, 'Part C', 5) if mode in {'full', '10'} else []
+        # SECTION B (5 Marks, 10 Questions = 5 pairs either/or in Full mode)
+        if mode in {'full', '5'}:
+            k_pool = [k for k in selected_k_levels if k in ['K2', 'K3', 'K4']] or selected_k_levels or ['K2', 'K3']
+            target_per_unit = max(1, 10 // len(selected_units))
+            for u in selected_units:
+                for _ in range(target_per_unit):
+                    if len(part_b) < 10:
+                        k = _random.choice(k_pool)
+                        part_b.append(get_syllabus_question(u, 5, k))
+            while len(part_b) < 10:
+                u = _random.choice(selected_units)
+                k = _random.choice(k_pool)
+                part_b.append(get_syllabus_question(u, 5, k))
+
+        # SECTION C (10 Marks, 5 Questions in Full mode)
+        if mode in {'full', '10'}:
+            k_pool = [k for k in selected_k_levels if k in ['K3', 'K4', 'K5', 'K6']] or selected_k_levels or ['K3', 'K4']
+            target_per_unit = max(1, 5 // len(selected_units))
+            for u in selected_units:
+                for _ in range(target_per_unit):
+                    if len(part_c) < 5:
+                        k = _random.choice(k_pool)
+                        part_c.append(get_syllabus_question(u, 10, k))
+            while len(part_c) < 5:
+                u = _random.choice(selected_units)
+                k = _random.choice(k_pool)
+                part_c.append(get_syllabus_question(u, 10, k))
+
+    # FALLBACK PATH: Question Bank (Only when syllabus is empty)
+    else:
+        base_filter = [Question.unit.in_(selected_units), Question.k_level.in_(selected_k_levels)]
+        question_filter = list(base_filter)
+        if selected_cos:
+            question_filter.append(Question.co.in_(selected_cos))
+
+        def questions_for_db(marks, needed):
+            res = []
+            per_unit = max(1, needed // len(selected_units)) if selected_units else 1
+            for u in selected_units:
+                unit_qs = Question.query.filter(*question_filter, Question.unit == u, Question.marks == marks).order_by(db.func.random()).all()
+                if not unit_qs and selected_cos:
+                    unit_qs = Question.query.filter(*base_filter, Question.unit == u, Question.marks == marks).order_by(db.func.random()).all()
+                count = 0
+                for q in unit_qs:
+                    if count >= per_unit or len(res) >= needed:
+                        break
+                    key = q.text.strip().lower()
+                    if key not in used_texts:
+                        used_texts.add(key)
+                        res.append({'id': q.id, 'text': q.text, 'k_level': q.k_level, 'unit': q.unit, 'co': q.co or f'CO{q.unit}',
+                                    'marks': q.marks, 'correct_answer': q.correct_answer or _make_answer_key(q.text[:30], marks)})
+                        count += 1
+            if len(res) < needed:
+                qs = Question.query.filter(*question_filter, Question.marks == marks).order_by(Question.unit.asc(), db.func.random()).all()
+                if not qs and selected_cos:
+                    qs = Question.query.filter(*base_filter, Question.marks == marks).order_by(Question.unit.asc(), db.func.random()).all()
+                for q in qs:
+                    if len(res) >= needed:
+                        break
+                    key = q.text.strip().lower()
+                    if key not in used_texts:
+                        used_texts.add(key)
+                        res.append({'id': q.id, 'text': q.text, 'k_level': q.k_level, 'unit': q.unit, 'co': q.co or f'CO{q.unit}',
+                                    'marks': q.marks, 'correct_answer': q.correct_answer or _make_answer_key(q.text[:30], marks)})
+            res.sort(key=lambda x: int(x.get('unit') or 1))
+            return res[:needed]
+
+        part_a = questions_for_db(2, 10) if mode in {'full', '2'} else []
+        part_b = questions_for_db(5, 10) if mode in {'full', '5'} else []
+        part_c = questions_for_db(10, 5) if mode in {'full', '10'} else []
 
     paper = {'part_a': part_a, 'part_b': part_b, 'part_c': part_c}
     counts = {'part_a': len(part_a), 'part_b': len(part_b), 'part_c': len(part_c)}
     warnings = []
-    required = {'Part A': 10, 'Part B': 10, 'Part C': 5}
-    active = {'2': ['Part A'], '5': ['Part B'], '10': ['Part C'], 'full': ['Part A', 'Part B', 'Part C']}[mode]
-    for sec in active:
-        actual = counts[sec.lower().replace(' ', '_')]
-        if actual < required[sec]:
-            warnings.append(f'{sec}: need {required[sec]}, found {actual}.')
-    if fallback_sections:
-        warnings.append('CO match unavailable for: ' + ', '.join(fallback_sections) + '. Used Unit/K-level pool instead.')
 
     generated = GeneratedPaper(
         user_id=user.id,
         subject_code=subject_code,
+        submit_subject=subject_title,
         selections=json.dumps({'units': selected_units, 'k_levels': selected_k_levels, 'cos': selected_cos}),
-        paper_json=json.dumps({**paper, 'counts': counts}),
+        paper_json=json.dumps({**paper, 'counts': counts, 'subject_title': subject_title, 'subject_code': subject_code}),
     )
     db.session.add(generated)
     db.session.commit()
-    log_activity('paper_generated', f'Generated {subject_code}: {len(part_a)}A {len(part_b)}B {len(part_c)}C.')
+    log_activity('paper_generated', f'Generated {subject_code} ({subject_title}): {len(part_a)}A {len(part_b)}B {len(part_c)}C.')
     return jsonify({**paper, 'counts': counts, 'warnings': warnings, 'paper_id': generated.id,
-                    'mode': mode, 'subject_code': subject_code})
+                    'mode': mode, 'subject_code': subject_code, 'subject_title': subject_title})
+
 
 
 if __name__ == '__main__':
