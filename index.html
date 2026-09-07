@@ -457,11 +457,11 @@
               <div class="grid sm:grid-cols-2 gap-3 mb-3">
                 <div>
                   <span class="label">Examination Session</span>
-                  <input id="exam-session" class="field" placeholder="e.g., APRIL / MAY EXAMINATIONS – 2026" value="APRIL / MAY EXAMINATIONS – 2026">
+                  <input id="exam-session" class="field" placeholder="e.g., APRIL / MAY EXAMINATIONS – 2026" value="">
                 </div>
                 <div>
                   <span class="label">QP Number (Q.No)</span>
-                  <input id="qp-number" class="field" placeholder="e.g., 2117" value="2117">
+                  <input id="qp-number" class="field" placeholder="e.g., 2117" value="">
                 </div>
               </div>
 
@@ -1377,10 +1377,10 @@
     // Render Official KMG Question Paper Format
     function renderPaperView(data) {
       currentPaperObj = data;
-      const subjectTitle = (data.subject_title || document.getElementById('syllabus-title').value.trim() || 'QUESTION PAPER').toUpperCase();
-      const subjectCode = (data.subject_code || document.getElementById('subject-code').value.trim() || 'AUCAI11').toUpperCase();
-      const examSession = (document.getElementById('exam-session')?.value.trim() || 'APRIL / MAY EXAMINATIONS – 2026').toUpperCase();
-      const qpNumber = document.getElementById('qp-number')?.value.trim() || '2117';
+      const subjectTitle = (data.subject_title || document.getElementById('syllabus-title')?.value.trim() || 'QUESTION PAPER').toUpperCase();
+      const subjectCode = (data.subject_code || document.getElementById('subject-code')?.value.trim() || 'AUCAI11').toUpperCase();
+      const examSession = (document.getElementById('exam-session')?.value.trim() || '').toUpperCase();
+      const qpNumber = document.getElementById('qp-number')?.value.trim() || '';
       const mode = data.mode || 'full';
 
       let duration = '3Hrs';
@@ -1397,9 +1397,10 @@
             <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
               K.M.G COLLEGE OF ARTS AND SCIENCE (AUTONOMOUS)
             </div>
+            ${examSession ? `
             <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
               ${examSession}
-            </div>
+            </div>` : ''}
             <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
               ${subjectCode} – ${subjectTitle}
             </div>
