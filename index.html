@@ -1539,23 +1539,31 @@
 
     function downloadPaperPDF() {
       const original = document.getElementById('paper-print-area');
+      if (!original) return;
       const subjectCode = (currentPaperObj && currentPaperObj.subject_code) || document.getElementById('subject-code').value.trim() || 'AUCAI11';
       const qpNumber = document.getElementById('qp-number')?.value.trim() || '2117';
 
-      // Create a dedicated offscreen clone to eliminate scroll offset, modal padding, and top blank space
+      // Create a temporary visible overlay container so html2canvas renders exact pixels without viewport clipping or negative coordinate errors
       const clone = document.createElement('div');
+      clone.id = 'temp-pdf-export-node';
       clone.style.position = 'fixed';
       clone.style.top = '0';
-      clone.style.left = '-99999px';
-      clone.style.width = '750px';
+      clone.style.left = '0';
+      clone.style.width = '760px';
+      clone.style.maxWidth = '760px';
       clone.style.background = '#ffffff';
       clone.style.color = '#000000';
       clone.style.fontFamily = "'Times New Roman', Times, serif";
-      clone.style.padding = '0';
+      clone.style.fontSize = '10pt';
+      clone.style.lineHeight = '1.35';
+      clone.style.padding = '12px 14px';
       clone.style.margin = '0';
-      clone.innerHTML = original.innerHTML;
+      clone.style.boxSizing = 'border-box';
+      clone.style.zIndex = '999999';
+      clone.style.overflow = 'visible';
+      clone.innerHTML = original.firstElementChild ? original.firstElementChild.outerHTML : original.innerHTML;
 
-      // Enforce avoid break-inside on all table elements
+      // Ensure every question row avoids page breaking in the middle
       clone.querySelectorAll('tr').forEach(el => {
         el.style.breakInside = 'avoid';
         el.style.pageBreakInside = 'avoid';
@@ -1568,9 +1576,9 @@
       document.body.appendChild(clone);
 
       const opt = {
-        margin:       [8, 8, 8, 8],
+        margin:       [6, 6, 6, 6],
         filename:     `${subjectCode}_QP_${qpNumber}.pdf`,
-        image:        { type: 'jpeg', quality: 0.99 },
+        image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  {
           scale: 2,
           useCORS: true,
@@ -1578,23 +1586,38 @@
           logging: false,
           scrollY: 0,
           scrollX: 0,
-          windowWidth: 750
+          windowWidth: 760
         },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'], avoid: ['tr', 'tbody', 'thead', '.section-container'] }
       };
 
       showToast('Generating Question Paper PDF file...', '📄');
+
+      const cleanup = () => {
+        if (document.body.contains(clone)) {
+          document.body.removeChild(clone);
+        }
+      };
+
       if (window.html2pdf) {
-        window.html2pdf().set(opt).from(clone).save().then(() => {
-          if (document.body.contains(clone)) document.body.removeChild(clone);
-          showToast('Question Paper PDF downloaded successfully!', '✅');
-        }).catch(err => {
-          if (document.body.contains(clone)) document.body.removeChild(clone);
+        try {
+          window.html2pdf().set(opt).from(clone).save()
+            .then(() => {
+              cleanup();
+              showToast('Question Paper PDF downloaded successfully!', '✅');
+            })
+            .catch(err => {
+              cleanup();
+              showToast('Direct download issue. Opening print dialog...', '🖨️');
+              window.print();
+            });
+        } catch (e) {
+          cleanup();
           window.print();
-        });
+        }
       } else {
-        if (document.body.contains(clone)) document.body.removeChild(clone);
+        cleanup();
         window.print();
       }
     }
