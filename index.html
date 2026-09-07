@@ -139,13 +139,16 @@
 
   /* Print Styles for Official Question Paper */
   @media print {
-    @page { size: A4 portrait; margin: 6mm !important; }
-    html, body { width: 100% !important; margin: 0 !important; padding: 0 !important; background: white !important; color: black !important; font-family: 'Times New Roman', serif !important; font-size: 10.5pt; line-height: 1.35; height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    @page { size: A4 portrait; margin: 8mm !important; }
+    html, body { width: 100% !important; margin: 0 !important; padding: 0 !important; background: white !important; color: black !important; font-family: 'Times New Roman', serif !important; font-size: 10pt; line-height: 1.3; height: auto !important; overflow: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     header, nav, #toast, .no-print, #auth-view, #app-view > main, #warning-modal, #submit-modal, #add-question-modal, #change-password-modal { display: none !important; }
     #paper-modal { position: static !important; inset: auto !important; background: white !important; display: block !important; padding: 0 !important; margin: 0 auto !important; width: 100% !important; backdrop-filter: none !important; z-index: auto !important; height: auto !important; max-height: none !important; overflow: visible !important; }
     #paper-modal .modal-box { max-width: 100% !important; width: 100% !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 auto !important; max-height: none !important; overflow: visible !important; background: white !important; color: black !important; }
     #paper-print-area { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; padding: 0 !important; margin: 0 auto !important; border: none !important; box-shadow: none !important; background: white !important; color: black !important; font-family: 'Times New Roman', serif !important; }
-    .official-paper-border { width: 100% !important; border: 2px solid #000 !important; }
+    .official-paper-container { width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
+    tbody { page-break-inside: avoid !important; break-inside: avoid !important; }
+    .section-container { page-break-inside: auto !important; break-inside: auto !important; }
     .page-break { page-break-before: always; break-before: page; }
   }
 </style>
@@ -205,6 +208,7 @@
         </div>
         <div class="flex items-center gap-2 flex-wrap no-print">
           <button class="btn btn-green btn-sm text-xs" onclick="downloadPaperPDF()">📥 Download PDF (.pdf)</button>
+          <button class="btn btn-amber btn-sm text-xs" onclick="window.print()">🖨️ Print / Save as PDF</button>
           <button class="btn btn-outline btn-sm text-xs" onclick="closeModal('paper-modal')">✕ Close</button>
         </div>
       </div>
@@ -1372,48 +1376,49 @@
       else if (mode === '10') { duration = '2.5Hrs'; maxMarks = '30'; }
 
       let html = `
-        <div class="official-paper-border" style="border: 2px solid #000; padding: 16px 20px; background: #fff; color: #000; font-family: 'Times New Roman', Times, serif; font-size: 10.5pt; line-height: 1.35; width: 100%; box-sizing: border-box;">
+        <div class="official-paper-container" style="background: #ffffff; color: #000000; font-family: 'Times New Roman', Times, serif; font-size: 10pt; line-height: 1.35; width: 100%; box-sizing: border-box; padding: 2px 4px;">
           
           <!-- OFFICIAL COLLEGE HEADER -->
-          <div style="text-align: center; margin-bottom: 8px;">
+          <div style="text-align: center; margin-bottom: 6px;">
             <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
               K.M.G COLLEGE OF ARTS AND SCIENCE (AUTONOMOUS)
             </div>
             <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
               ${examSession}
             </div>
-            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
               ${subjectCode} – ${subjectTitle}
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 11pt; padding: 0 2px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10.5pt; padding: 0 2px;">
               <span>Duration: ${duration}</span>
               <span>Maximum Marks: ${maxMarks}</span>
             </div>
+            <hr style="border: none; border-top: 1.5px solid #000; margin: 5px 0 8px 0;">
           </div>
       `;
 
       // SECTION-A
       if (data.part_a && data.part_a.length) {
         html += `
-          <div class="section-container" style="margin-top: 8px; margin-bottom: 12px; page-break-inside: avoid; break-inside: avoid;">
-            <div style="text-align: center; font-weight: bold; font-size: 11pt; text-transform: uppercase; margin-bottom: 1px;">
+          <div class="section-container" style="margin-top: 6px; margin-bottom: 10px; page-break-inside: auto; break-inside: auto;">
+            <div style="text-align: center; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 1px;">
               SECTION-A (${data.part_a.length}x2=${data.part_a.length * 2})
             </div>
-            <div style="text-align: center; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 5px;">
+            <div style="text-align: center; font-weight: bold; font-size: 10pt; text-transform: uppercase; margin-bottom: 4px;">
               ANSWER ALL THE QUESTIONS
             </div>
-            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 10pt; font-family: 'Times New Roman', Times, serif;">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 9.5pt; font-family: 'Times New Roman', Times, serif;">
               <thead>
-                <tr style="background: #ffffff;">
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 55px; text-align: center; font-weight: bold;">Q.No</th>
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 75px; text-align: center; font-weight: bold;">CO Level</th>
-                  <th style="border: 1px solid #000; padding: 4px 8px; text-align: center; font-weight: bold;">Questions</th>
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 65px; text-align: center; font-weight: bold;">K-Level</th>
+                <tr style="background: #ffffff; page-break-inside: avoid; break-inside: avoid;">
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 55px; text-align: center; font-weight: bold;">Q.No</th>
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 75px; text-align: center; font-weight: bold;">CO Level</th>
+                  <th style="border: 1px solid #000; padding: 3px 8px; text-align: center; font-weight: bold;">Questions</th>
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 65px; text-align: center; font-weight: bold;">K-Level</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.part_a.map((q, idx) => `
-                  <tr>
+                  <tr style="page-break-inside: avoid; break-inside: avoid;">
                     <td style="border: 1px solid #000; padding: 3px 6px; text-align: center; vertical-align: top;">${idx + 1}</td>
                     <td style="border: 1px solid #000; padding: 3px 6px; text-align: center; vertical-align: top;">${q.co || ('CO' + (q.unit || 1))}</td>
                     <td style="border: 1px solid #000; padding: 3px 8px; text-align: left; vertical-align: top;">${q.text}</td>
@@ -1430,23 +1435,22 @@
       if (data.part_b && data.part_b.length) {
         const numPairs = Math.ceil(data.part_b.length / 2);
         html += `
-          <div class="section-container" style="margin-top: 10px; margin-bottom: 12px; page-break-inside: avoid; break-inside: avoid;">
-            <div style="text-align: center; font-weight: bold; font-size: 11pt; text-transform: uppercase; margin-bottom: 1px;">
+          <div class="section-container" style="margin-top: 8px; margin-bottom: 10px; page-break-inside: auto; break-inside: auto;">
+            <div style="text-align: center; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 1px;">
               SECTION-B (${numPairs}x5=${numPairs * 5})
             </div>
-            <div style="text-align: center; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 5px;">
+            <div style="text-align: center; font-weight: bold; font-size: 10pt; text-transform: uppercase; margin-bottom: 4px;">
               ANSWER ALL THE QUESTIONS
             </div>
-            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 10pt; font-family: 'Times New Roman', Times, serif;">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 9.5pt; font-family: 'Times New Roman', Times, serif;">
               <thead>
-                <tr style="background: #ffffff;">
-                  <th colspan="2" style="border: 1px solid #000; padding: 4px 6px; width: 62px; text-align: center; font-weight: bold;">Q.No</th>
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 75px; text-align: center; font-weight: bold;">CO Level</th>
-                  <th style="border: 1px solid #000; padding: 4px 8px; text-align: center; font-weight: bold;">Questions</th>
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 65px; text-align: center; font-weight: bold;">K-Level</th>
+                <tr style="background: #ffffff; page-break-inside: avoid; break-inside: avoid;">
+                  <th colspan="2" style="border: 1px solid #000; padding: 3px 6px; width: 62px; text-align: center; font-weight: bold;">Q.No</th>
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 75px; text-align: center; font-weight: bold;">CO Level</th>
+                  <th style="border: 1px solid #000; padding: 3px 8px; text-align: center; font-weight: bold;">Questions</th>
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 65px; text-align: center; font-weight: bold;">K-Level</th>
                 </tr>
               </thead>
-              <tbody>
         `;
 
         for (let i = 0; i < data.part_b.length; i += 2) {
@@ -1457,27 +1461,28 @@
           const coB = qB.co || ('CO' + (qB.unit || Math.floor(i / 2) + 1));
 
           html += `
-            <tr>
-              <td rowspan="3" style="border: 1px solid #000; padding: 3px 6px; width: 34px; text-align: center; vertical-align: middle; font-weight: normal;">${qNum}</td>
-              <td style="border: 1px solid #000; padding: 3px 6px; width: 28px; text-align: center; vertical-align: top;">A</td>
-              <td style="border: 1px solid #000; padding: 3px 6px; width: 75px; text-align: center; vertical-align: top;">${coA}</td>
-              <td style="border: 1px solid #000; padding: 3px 8px; text-align: left; vertical-align: top;">${qA.text}</td>
-              <td style="border: 1px solid #000; padding: 3px 6px; width: 65px; text-align: center; vertical-align: top;">${qA.k_level || 'K1'}</td>
-            </tr>
-            <tr>
-              <td colspan="4" style="border: 1px solid #000; padding: 2px 6px; text-align: center; font-weight: bold; font-size: 9.5pt; text-transform: uppercase;">OR</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #000; padding: 3px 6px; width: 28px; text-align: center; vertical-align: top;">B</td>
-              <td style="border: 1px solid #000; padding: 3px 6px; width: 75px; text-align: center; vertical-align: top;">${coB}</td>
-              <td style="border: 1px solid #000; padding: 3px 8px; text-align: left; vertical-align: top;">${qB.text}</td>
-              <td style="border: 1px solid #000; padding: 3px 6px; width: 65px; text-align: center; vertical-align: top;">${qB.k_level || 'K2'}</td>
-            </tr>
+            <tbody style="page-break-inside: avoid; break-inside: avoid;">
+              <tr style="page-break-inside: avoid; break-inside: avoid;">
+                <td rowspan="3" style="border: 1px solid #000; padding: 3px 6px; width: 34px; text-align: center; vertical-align: middle; font-weight: normal;">${qNum}</td>
+                <td style="border: 1px solid #000; padding: 3px 6px; width: 28px; text-align: center; vertical-align: top;">A</td>
+                <td style="border: 1px solid #000; padding: 3px 6px; width: 75px; text-align: center; vertical-align: top;">${coA}</td>
+                <td style="border: 1px solid #000; padding: 3px 8px; text-align: left; vertical-align: top;">${qA.text}</td>
+                <td style="border: 1px solid #000; padding: 3px 6px; width: 65px; text-align: center; vertical-align: top;">${qA.k_level || 'K1'}</td>
+              </tr>
+              <tr style="page-break-inside: avoid; break-inside: avoid;">
+                <td colspan="4" style="border: 1px solid #000; padding: 2px 6px; text-align: center; font-weight: bold; font-size: 9pt; text-transform: uppercase;">OR</td>
+              </tr>
+              <tr style="page-break-inside: avoid; break-inside: avoid;">
+                <td style="border: 1px solid #000; padding: 3px 6px; width: 28px; text-align: center; vertical-align: top;">B</td>
+                <td style="border: 1px solid #000; padding: 3px 6px; width: 75px; text-align: center; vertical-align: top;">${coB}</td>
+                <td style="border: 1px solid #000; padding: 3px 8px; text-align: left; vertical-align: top;">${qB.text}</td>
+                <td style="border: 1px solid #000; padding: 3px 6px; width: 65px; text-align: center; vertical-align: top;">${qB.k_level || 'K2'}</td>
+              </tr>
+            </tbody>
           `;
         }
 
         html += `
-              </tbody>
             </table>
           </div>
         `;
@@ -1486,25 +1491,25 @@
       // SECTION-C (Any 3 out of 5)
       if (data.part_c && data.part_c.length) {
         html += `
-          <div class="section-container" style="margin-top: 10px; margin-bottom: 12px; page-break-inside: avoid; break-inside: avoid;">
-            <div style="text-align: center; font-weight: bold; font-size: 11pt; text-transform: uppercase; margin-bottom: 1px;">
+          <div class="section-container" style="margin-top: 8px; margin-bottom: 10px; page-break-inside: auto; break-inside: auto;">
+            <div style="text-align: center; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 1px;">
               SECTION-C (3x10=30)
             </div>
-            <div style="text-align: center; font-weight: bold; font-size: 10.5pt; text-transform: uppercase; margin-bottom: 5px;">
+            <div style="text-align: center; font-weight: bold; font-size: 10pt; text-transform: uppercase; margin-bottom: 4px;">
               ANSWER ANY THREE QUESTIONS
             </div>
-            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 10pt; font-family: 'Times New Roman', Times, serif;">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; font-size: 9.5pt; font-family: 'Times New Roman', Times, serif;">
               <thead>
-                <tr style="background: #ffffff;">
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 55px; text-align: center; font-weight: bold;">Q.No</th>
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 75px; text-align: center; font-weight: bold;">CO Level</th>
-                  <th style="border: 1px solid #000; padding: 4px 8px; text-align: center; font-weight: bold;">Questions</th>
-                  <th style="border: 1px solid #000; padding: 4px 6px; width: 65px; text-align: center; font-weight: bold;">K-Level</th>
+                <tr style="background: #ffffff; page-break-inside: avoid; break-inside: avoid;">
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 55px; text-align: center; font-weight: bold;">Q.No</th>
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 75px; text-align: center; font-weight: bold;">CO Level</th>
+                  <th style="border: 1px solid #000; padding: 3px 8px; text-align: center; font-weight: bold;">Questions</th>
+                  <th style="border: 1px solid #000; padding: 3px 6px; width: 65px; text-align: center; font-weight: bold;">K-Level</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.part_c.map((q, idx) => `
-                  <tr>
+                  <tr style="page-break-inside: avoid; break-inside: avoid;">
                     <td style="border: 1px solid #000; padding: 3px 6px; text-align: center; vertical-align: top;">${16 + idx}</td>
                     <td style="border: 1px solid #000; padding: 3px 6px; text-align: center; vertical-align: top;">${q.co || ('CO' + (q.unit || idx + 1))}</td>
                     <td style="border: 1px solid #000; padding: 3px 8px; text-align: left; vertical-align: top;">${q.text}</td>
@@ -1519,10 +1524,11 @@
 
       // OFFICIAL FOOTER
       html += `
-          <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 11pt; font-family: 'Times New Roman', Times, serif; margin-top: 14px; padding-top: 2px;">
-            <span style="width: 140px; text-align: left;">Q.No:${qpNumber}</span>
-            <span style="flex: 1; text-align: center;">1</span>
-            <span style="width: 180px; text-align: right;">Reg.No:</span>
+          <hr style="border: none; border-top: 1px solid #000; margin: 10px 0 6px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10pt; font-family: 'Times New Roman', Times, serif; padding: 0 2px;">
+            <span style="width: 140px; text-align: left;">Q.No: ${qpNumber}</span>
+            <span style="flex: 1; text-align: center;">*** END OF QUESTION PAPER ***</span>
+            <span style="width: 180px; text-align: right;">Reg.No: ____________</span>
           </div>
 
         </div>
@@ -1532,26 +1538,63 @@
     }
 
     function downloadPaperPDF() {
-      const element = document.getElementById('paper-print-area');
-      const subjectCode = (currentPaperObj && currentPaperObj.subject_code) || document.getElementById('subject-code').value.trim() || 'AUCAI41';
+      const original = document.getElementById('paper-print-area');
+      const subjectCode = (currentPaperObj && currentPaperObj.subject_code) || document.getElementById('subject-code').value.trim() || 'AUCAI11';
       const qpNumber = document.getElementById('qp-number')?.value.trim() || '2117';
-      
+
+      // Create a dedicated offscreen clone to eliminate scroll offset, modal padding, and top blank space
+      const clone = document.createElement('div');
+      clone.style.position = 'fixed';
+      clone.style.top = '0';
+      clone.style.left = '-99999px';
+      clone.style.width = '750px';
+      clone.style.background = '#ffffff';
+      clone.style.color = '#000000';
+      clone.style.fontFamily = "'Times New Roman', Times, serif";
+      clone.style.padding = '0';
+      clone.style.margin = '0';
+      clone.innerHTML = original.innerHTML;
+
+      // Enforce avoid break-inside on all table elements
+      clone.querySelectorAll('tr').forEach(el => {
+        el.style.breakInside = 'avoid';
+        el.style.pageBreakInside = 'avoid';
+      });
+      clone.querySelectorAll('tbody').forEach(el => {
+        el.style.breakInside = 'avoid';
+        el.style.pageBreakInside = 'avoid';
+      });
+
+      document.body.appendChild(clone);
+
       const opt = {
-        margin:       [4, 4, 4, 4],
+        margin:       [8, 8, 8, 8],
         filename:     `${subjectCode}_QP_${qpNumber}.pdf`,
         image:        { type: 'jpeg', quality: 0.99 },
-        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas:  {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 750
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'], avoid: ['tr', 'tbody', 'thead', '.section-container'] }
       };
 
       showToast('Generating Question Paper PDF file...', '📄');
       if (window.html2pdf) {
-        html2pdf().set(opt).from(element).save().then(() => {
+        window.html2pdf().set(opt).from(clone).save().then(() => {
+          if (document.body.contains(clone)) document.body.removeChild(clone);
           showToast('Question Paper PDF downloaded successfully!', '✅');
         }).catch(err => {
+          if (document.body.contains(clone)) document.body.removeChild(clone);
           window.print();
         });
       } else {
+        if (document.body.contains(clone)) document.body.removeChild(clone);
         window.print();
       }
     }
